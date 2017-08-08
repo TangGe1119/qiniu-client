@@ -42,10 +42,12 @@
             confirm() {
                 if(this.accessKeyErr || this.secretKeyErr) return;
                 this.setKeys({
-                    accessKey: this.accessKey,
-                    secretKey: this.secretKey
-                });
-                this.dialog = false;
+                    ak: this.accessKey,
+                    sk: this.secretKey
+                }).then(() => {
+                    this.dialog = false;
+                    this.$router.push('/buckets')
+                }).catch(e => {});
             }
         }
     }

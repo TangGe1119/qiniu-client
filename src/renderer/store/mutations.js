@@ -6,5 +6,8 @@ export default {
     },
     [types.SET_SECRET_KEY](state, secretKey) {
         state.secretKey = secretKey;
+    },
+    [types.SET_BUCKETS](state, buckets) {
+        state.buckets = buckets;
     }
 }

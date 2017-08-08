@@ -1,12 +1,17 @@
 import Vue from 'vue'
 import Router from 'vue-router'
+import storage from '../common/storage';
 
 Vue.use(Router)
 
-export default new Router({
+const router =  new Router({
     routes: [{
             path: '/',
-            component: require('@/components/Home')
+            component: require('@/pages/Buckets')
+        },
+        {
+            path: '/nokey',
+            component: require('@/pages/NoKey')
         },
         {
             path: '*',
@@ -14,3 +19,15 @@ export default new Router({
         }
     ]
 })
+
+router.beforeEach((to, from, next) => {
+    if(to.path === '/nokey') return next();
+    let isSetKey = !storage.get('AK') || !storage.get('SK');
+    if(isSetKey) {
+        next({path: '/nokey'});
+        return;
+    }
+    next();
+})
+
+export default router;
