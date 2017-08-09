@@ -5,13 +5,19 @@ import storage from '../common/storage';
 Vue.use(Router)
 
 const router =  new Router({
-    routes: [{
+    routes: [
+        {
             path: '/',
             component: require('@/pages/Buckets')
         },
         {
             path: '/nokey',
             component: require('@/pages/NoKey')
+        },
+        {
+            name: 'bucketDetail',
+            path: '/bucket-detail/:name',
+            component: require('@/pages/BucketDetail')
         },
         {
             path: '*',

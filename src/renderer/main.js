@@ -1,9 +1,14 @@
 import Vue from 'vue'
 import axios from 'axios'
+
 import MuseUI from 'muse-ui'
 import 'muse-ui/dist/muse-ui.css'
 import 'muse-ui/dist/theme-light.css'
 Vue.use(MuseUI)
+
+import iView from 'iview';
+import 'iview/dist/styles/iview.css';
+Vue.use(iView);
 
 import App from './App'
 import router from './router'

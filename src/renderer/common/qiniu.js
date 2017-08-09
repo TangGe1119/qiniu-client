@@ -25,4 +25,44 @@ export default class Qiniu {
 
         return rp(options);
     }
+
+    static list(ak, sk, bucket, marker = '', prefix = '', limit = 100) {
+        const mac = {
+            accessKey: ak,
+            secretKey: sk,
+        };
+        const requestURI = `http://rsf.qbox.me/list?bucket=${bucket}&limit=100&marker=${marker}&prefix=${prefix}`;
+        const reqBody = '';
+        const accessToken = Util.generateAccessToken(mac, requestURI, reqBody);
+
+        const options = {
+            uri: requestURI,
+            headers: {
+                Authorization: accessToken,
+            },
+            json: true,
+        };
+
+        return rp(options);
+    }
+
+    static domain(ak, sk, bucket) {
+        const mac = {
+            accessKey: ak,
+            secretKey: sk,
+        };
+        const requestURI = `http://api.qiniu.com/v6/domain/list?tbl=${bucket}`;
+        const reqBody = '';
+        const accessToken = Util.generateAccessToken(mac, requestURI, reqBody);
+
+        const options = {
+            uri: requestURI,
+            headers: {
+                Authorization: accessToken,
+            },
+            json: true,
+        };
+
+        return rp(options);
+    }
 }

@@ -1,15 +1,17 @@
 <template>
     <div id="app">
-        <mu-appbar title="Qiniu-client"></mu-appbar>
+        <div class="top-bar">QiNiu</div>
         <div class="home">
-            <router-view></router-view>
+            <keep-alive>
+                <router-view></router-view>
+            </keep-alive>
         </div>
     </div>
 </template>
 
 <script>
 export default {
- 
+
 }
 </script>
 
@@ -17,7 +19,13 @@ export default {
 html, body, #app {
     height: 100%;
 }
-.mu-appbar-title {
+.top-bar {
+    height: 64px;
+    font-size: 20px;
+    line-height: 64px;
+    background: #2d8cf0;
+    color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, .3);
     text-align: center;
 }
 .home {
@@ -25,5 +33,6 @@ html, body, #app {
     height: calc(100% - 64px);
     overflow-x: hidden;
     overflow-y: auto;
+    padding: 25px;
 }
 </style>

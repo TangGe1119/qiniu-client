@@ -1,7 +1,8 @@
 import storage from '../common/storage';
-
+const {getGlobal} = require('electron').remote;
 export default {
-    accessKey: storage.get('AK'),
-    secretKey: storage.get('SK'),
-    buckets: storage.get('BUCKETS')
+    ak: storage.get('AK'),
+    sk: storage.get('SK'),
+    buckets: storage.get('BUCKETS'),
+    downloadPath: storage.get('DOWN_PATH') || getGlobal('rootPath')
 }
