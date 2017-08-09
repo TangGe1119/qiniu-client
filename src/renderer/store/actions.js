@@ -44,5 +44,12 @@ export const getDomain = ({commit, state}, bucket) => {
 }
 
 export const setDownloadPath = ({commit}, path) => {
+    commit('SET_DOWNLOAD_PATH', path);
     storage.set('DOWN_PATH', path);
+}
+
+export const deleteFile = ({commit, state}, {bucket, key}) => {
+    let ak = state.ak;
+    let sk = state.sk;
+    return Qiniu.delete(ak, sk, bucket, key);
 }

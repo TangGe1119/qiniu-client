@@ -6,7 +6,7 @@
                 <Button @click="refresh" type="info" icon="refresh">刷新</Button>
                 <Button type="success" icon="ios-cloud-upload-outline">上传</Button>
                 <Button @click="downloadChecked" type="primary" icon="ios-cloud-download-outline">批量下载</Button>
-                <Button type="warning" icon="android-delete">批量删除</Button>
+                <Button @click="delectChecked" type="warning" icon="android-delete">批量删除</Button>
             </div>
         </div>
         <Table :columns="columns" :data="content" @on-selection-change="changeSelect"></Table>
@@ -17,16 +17,17 @@
                 <p class="desc">文件大小：{{this.fileSize(currentImg.fsize)}}</p>
                 <p class="desc">最后更新：{{this.formatDate(currentImg.putTime)}}</p>
                 <p class="desc">外链地址：<a>{{currentImg.url}}</a> 
-                    <Button style="font-size: 16px;padding: 0 15px;margin-left: 10px;" icon="ios-cloud-download-outline"></Button> 
+                    <Button @click="download(currentImg)" style="font-size: 16px;padding: 0 15px;margin-left: 10px;" icon="ios-cloud-download-outline"></Button> 
                 </p>
             </div>
         </Modal>
     </div>
 </template>
 <script>
-import {mapActions} from 'vuex';
+import {mapActions, mapGetters} from 'vuex';
 import {Dropdown, Button, Icon, DropdownMenu, DropdownItem} from 'iview';
 const {ipcRenderer} = require('electron');
+import copyTextToClipboard from '../common/copy';
 export default {
     data() {
         return {
@@ -65,12 +66,12 @@ export default {
                                 <span onClick={this.preview.bind(this, params.index)}>
                                     <Icon type="eye" title="预览"></Icon>
                                 </span>
-                                <Dropdown trigger="click" title="更多操作">
+                                <Dropdown trigger="click" onOn-click={this.dropdown.bind(this, params.index)} title="更多操作">
                                     <Icon type="more"></Icon>
                                     <Dropdown-menu slot="list">
-                                        <Dropdown-item>下载文件</Dropdown-item>
-                                        <Dropdown-item>复制链接</Dropdown-item>
-                                        <Dropdown-item>删除文件</Dropdown-item>
+                                        <Dropdown-item name="download">下载文件</Dropdown-item>
+                                        <Dropdown-item name="delete">删除文件</Dropdown-item>
+                                        <Dropdown-item name="copy">复制链接</Dropdown-item>
                                     </Dropdown-menu>
                                 </Dropdown>
                             </div>
@@ -84,6 +85,9 @@ export default {
         }
     },
     computed: {
+        ...mapGetters([
+            'downloadPath'
+        ]),
         name() {
             return this.$route.params.name;
         },
@@ -101,25 +105,38 @@ export default {
         }
     },
     created() {
-        this.getList({
-            bucket: this.name
-        }).then(list => {
-            this.list = list.items;
-        }).catch(e => {console.log(e)});
-
-        this.getDomain(this.name).then(domains => {
-            this.domains = domains;
-        }).catch(e => {
-            this.$Notice.error({
-                title: '获取空间域名失败'
+        this._getList();
+        this._getDomain();
+        
+        ipcRenderer.on('download-success', (event, filename) => {
+            this.$Notice.success({
+                title: '下载成功',
+                desc: `${filename}下载成功`
             });
-        })
+        });
     },
     methods: {
         ...mapActions([
             'getList',
-            'getDomain'
+            'getDomain',
+            'deleteFile'
         ]),
+        _getList() {
+            this.getList({
+                bucket: this.name
+            }).then(list => {
+                this.list = list.items;
+            }).catch(e => {console.log(e)});
+        },
+        _getDomain() {
+            this.getDomain(this.name).then(domains => {
+                this.domains = domains;
+            }).catch(e => {
+                this.$Notice.error({
+                    title: '获取空间域名失败'
+                });
+            });
+        },
         fileSize(size) {
             if(size > 1048576) {
                 size = (size / 1048576).toFixed(2) + ' MB';
@@ -170,9 +187,12 @@ export default {
             let reg = /\.(jpe?g|gif|png|svg|ico)$/i;
             return reg.test(url);
         },
+        getUrl(key) {
+            return `http://${this.domain}/${key}`;
+        },
         refresh() {
             this.$Loading.config({
-                color: '#47cb89',
+                color: '#19be6b',
                 failedColor: '#f0ad4e',
                 height: 5
             });
@@ -192,13 +212,65 @@ export default {
         changeSelect(selection) {
             this.selection = selection;
         },
+        dropdown(index, name) {
+            if(name === 'download') {
+                this.download(this.list[index]);
+            }else if(name === 'delete') {
+                this.delete(this.list[index]);
+            }else if(name === 'copy') {
+                copyTextToClipboard(this.getUrl(this.list[index].key)).then(() => {
+                    this.$Message.info('复制成功');
+                });
+            }
+        },
         downloadChecked() {
             if(this.selection.length === 0) {
                 return this.$Notice.warning({
                     title: '最少选择一项下载'
                 });
             }
+            this.selection.forEach(item => {
+                this.download(item);
+            });
+            this._getList();
+        },
+        download(currentImg) {
+            ipcRenderer.send('download', {
+                url: this.getUrl(currentImg.key), 
+                downloadPath: this.downloadPath, 
+                filename: currentImg.key
+            });
+        },
+        _deleteOne(item) {
+            return new Promise((resolve, reject) => {
+                this.deleteFile({bucket: this.name, key: item.key}).then(() => {
+                    this.$Notice.success({
+                        title: `${item.key}删除成功`
+                    });
+                    resolve();
+                }).catch(e => {reject()});
+            })
+        },
+        delectChecked() {
+            if(this.selection.length === 0) {
+                return this.$Notice.warning({
+                    title: '最少选择一项删除'
+                });
+            }
+            let promiseArr = [];
             
+            this.selection.forEach(item => {
+                promiseArr.push(this._deleteOne(item));
+            });
+            console.log(promiseArr)
+            Promise.all(promiseArr).then(() => {
+                this._getList();
+            });
+        },
+        delete(item) {
+            this._deleteOne(item).then(() => {
+                this._getList();
+            });
         }
     }
 }

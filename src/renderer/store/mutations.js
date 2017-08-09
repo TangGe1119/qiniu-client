@@ -9,5 +9,8 @@ export default {
     },
     [types.SET_BUCKETS](state, buckets) {
         state.buckets = buckets;
+    },
+    [types.SET_DOWNLOAD_PATH](state, downloadPath) {
+        state.downloadPath = downloadPath;
     }
 }

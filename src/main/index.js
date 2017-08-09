@@ -6,6 +6,7 @@ import {
 } from 'electron'
 const fs = require('fs');
 const path = require('path');
+const request = require('request');
 
 /**
  * Set `__static` path to static files in production
@@ -64,9 +65,9 @@ function downloadFile(uri, filename, callback){
     request(uri).pipe(stream).on('close', callback); 
 }
 
-ipcMain.on('download', (url, path, filename) => {
-    downloadFile(url, path.join(path, filename), function() {
-        ipcMain.send('download-success', filename);
+ipcMain.on('download', (event, {url, downloadPath, filename}) => {
+    downloadFile(url, path.resolve(downloadPath, filename), function() {
+        event.sender.send('download-success', filename);
     });
 })
 
