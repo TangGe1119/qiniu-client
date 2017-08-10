@@ -17,7 +17,7 @@
     "postinstall": ""
   },
   "build": {
-    "productName": "qiniu-electron",
+    "productName": "QiNiu",
     "appId": "org.simulatedgreg.electron-vue",
     "directories": {
       "output": "build"
