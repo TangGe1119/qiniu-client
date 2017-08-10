@@ -6,6 +6,7 @@
 `git clone git@github.com:TangGe1119/qiniu-client.git`
 ### 开发预览
 `yarn install`
+
 `yarn dev`
 ### 打包
 `yarn build`
@@ -13,7 +14,7 @@
 ## 已有功能
 * [x] 通过ak和sk获取到对应的空间
 * [x] 设置默认下载路径
-* [x] 获取backet内文件
+* [x] 获取bucket内文件
 * [x] 图片预览
 * [x] 文件的下载（设置的下载路径）、上传、删除、链接复制等
 
