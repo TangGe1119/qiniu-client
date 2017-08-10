@@ -4,7 +4,7 @@
             <router-link to="/"><Button icon="ios-arrow-back" type="primary">返回首页</Button></router-link>
             <div class="fr">
                 <Button @click="refresh" type="info" icon="refresh">刷新</Button>
-                <Button type="success" icon="ios-cloud-upload-outline">上传</Button>
+                <Button @click="uploadModal = true" type="success" icon="ios-cloud-upload-outline">上传</Button>
                 <Button @click="downloadChecked" type="primary" icon="ios-cloud-download-outline">批量下载</Button>
                 <Button @click="delectChecked" type="warning" icon="android-delete">批量删除</Button>
             </div>
@@ -12,13 +12,33 @@
         <Table :columns="columns" :data="content" @on-selection-change="changeSelect"></Table>
         <Modal class-name="preview-modal" width="500" v-model="imgModal" style="text-align: center;">
             <h2 slot="header">{{currentImg.key}}</h2>
-            <img :src="currentImg.url" style="max-width: 100%;">
+            <img :src="currentImg.src" style="max-width: 100%;">
             <div slot="footer">
                 <p class="desc">文件大小：{{this.fileSize(currentImg.fsize)}}</p>
                 <p class="desc">最后更新：{{this.formatDate(currentImg.putTime)}}</p>
                 <p class="desc">外链地址：<a>{{currentImg.url}}</a> 
                     <Button @click="download(currentImg)" style="font-size: 16px;padding: 0 15px;margin-left: 10px;" icon="ios-cloud-download-outline"></Button> 
                 </p>
+            </div>
+        </Modal>
+        <Modal class-name="upload-modal" width="500" v-model="uploadModal" style="text-align: center;">
+            <div slot="header">
+                <h2>上传文件</h2>
+            </div>
+            <p class="tip-text" v-if="!hasUpload">请选择要上传的文件</p>
+            <div slot="footer">
+                <Upload 
+                    :before-upload="beforeUpload" 
+                    :on-success="uploadSuccess"
+                    :data="uploadData" 
+                    ref="upload"
+                    name="file" 
+                    multiple 
+                    action="http://upload.qiniu.com/">
+                    <Button type="primary" icon="ios-cloud-upload-outline">选择文件</Button>
+                    <div class="upload-tip" slot="tip"></div>
+                </Upload>
+                <Button @click="uploadModalClose">关闭</Button>
             </div>
         </Modal>
     </div>
@@ -28,6 +48,9 @@ import {mapActions, mapGetters} from 'vuex';
 import {Dropdown, Button, Icon, DropdownMenu, DropdownItem} from 'iview';
 const {ipcRenderer} = require('electron');
 import copyTextToClipboard from '../common/copy';
+import Policy from '../common/policy';
+import Loading from '@/assets/images/loading.svg'
+
 export default {
     data() {
         return {
@@ -81,12 +104,17 @@ export default {
             ],
             imgModal: false,
             currentImg: {},
-            selection: []
+            selection: [],
+            uploadModal: false,
+            uploadData: {},
+            hasUpload: false
         }
     },
     computed: {
         ...mapGetters([
-            'downloadPath'
+            'downloadPath',
+            'ak',
+            'sk'
         ]),
         name() {
             return this.$route.params.name;
@@ -102,7 +130,8 @@ export default {
         },
         domain() {
             return this.domains[0]
-        }
+        },
+        
     },
     created() {
         this._getList();
@@ -171,17 +200,23 @@ export default {
         preview(index) {
             let current = this.list[index];
             let url = `http://${this.domain}/${current.key}`;
-
+            this.currentImg = {
+                ...current,
+                src: Loading,
+                url
+            };
             if(!this.isImage(url)) {
                 return this.$Notice.warning({
                     title: '该文件类型不支持预览'
                 });
             }
             this.imgModal = true;
-            this.currentImg = {
-                ...current,
-                url
-            };
+
+            const img = new Image();
+            img.src = url;
+            img.onload = () => {
+                this.currentImg.src = url;
+            };   
         },
         isImage(url) {
             let reg = /\.(jpe?g|gif|png|svg|ico)$/i;
@@ -258,11 +293,9 @@ export default {
                 });
             }
             let promiseArr = [];
-            
             this.selection.forEach(item => {
                 promiseArr.push(this._deleteOne(item));
             });
-            console.log(promiseArr)
             Promise.all(promiseArr).then(() => {
                 this._getList();
             });
@@ -270,6 +303,30 @@ export default {
         delete(item) {
             this._deleteOne(item).then(() => {
                 this._getList();
+            });
+        },
+        uploadModalClose() {
+            this.uploadModal = false;
+            this.$refs.upload.clearFiles();
+            this.refresh();
+        },
+        beforeUpload(file) {
+            this.hasUpload = true;
+            const options = {
+                scope: `${this.name}:${file.name}`,
+            };
+            const mac = {
+                accessKey: this.ak,
+                secretKey: this.sk,
+            };
+            const putPolicy = new Policy(options);
+            const uploadToken = putPolicy.uploadToken(mac);
+            this.$set(this.uploadData, 'key', file.name);
+            this.$set(this.uploadData, 'token', uploadToken);
+        },
+        uploadSuccess(response, file, fileList) {
+            this.$Notice.success({
+                title: `${file.name}上传成功`
             });
         }
     }
@@ -307,5 +364,37 @@ export default {
 }
 .preview-modal .ivu-modal{
     top: 40px;
+}
+.upload-modal .ivu-upload {
+    display: inline-block;
+    margin-right: 5px;
+}
+.upload-modal .ivu-modal-body {
+    height: 316px;
+    padding: 0;
+}
+.upload-modal .ivu-modal-content {
+    position: relative;
+}
+.upload-modal .ivu-upload-list {
+    position: absolute;
+    top: 50px;
+    left: 20px;
+    width: calc(100% - 20px);
+    height: 300px;
+    overflow: auto;
+    text-align: left;
+}
+.upload-modal .ivu-upload-list-remove {
+    display: none;
+}
+.upload-modal .tip-text {
+    text-align: center;
+    padding: 10px;
+    font-size: 14px;
+}
+.ivu-upload-list-file {
+    font-size: 14px;
+    padding: 6px;
 }
 </style>

@@ -87,4 +87,10 @@ export default class Qiniu {
 
         return rp(options);
     }
+
+    static getUploadOption() {
+
+    }
+
+    
 }
