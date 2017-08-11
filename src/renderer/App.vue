@@ -2,9 +2,7 @@
     <div id="app">
         <div class="top-bar">QiNiu</div>
         <div class="home">
-            <keep-alive>
-                <router-view></router-view>
-            </keep-alive>
+            <router-view></router-view>
         </div>
     </div>
 </template>

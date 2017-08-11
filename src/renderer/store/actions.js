@@ -53,3 +53,15 @@ export const deleteFile = ({commit, state}, {bucket, key}) => {
     let sk = state.sk;
     return Qiniu.delete(ak, sk, bucket, key);
 }
+
+export const createBucket = ({commit, state}, {bucket, region}) => {
+    let ak = state.ak;
+    let sk = state.sk;
+    return Qiniu.createBucket(ak, sk, bucket, region);
+}
+
+export const removeBucket = ({commit, state}, {bucket}) => {
+    let ak = state.ak;
+    let sk = state.sk;
+    return Qiniu.removeBucket(ak, sk, bucket);
+}

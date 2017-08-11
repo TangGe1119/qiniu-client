@@ -60,7 +60,7 @@ export default class Util {
 
 
     /**
-     * UrlSafe Base64 Decode.
+     * UrlSafe Base64 Encode.
      * @param jsonFlag
      */
     static urlsafeBase64Encode(jsonFlags) {

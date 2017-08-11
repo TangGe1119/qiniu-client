@@ -1,6 +1,8 @@
 <template>
     <div :style="style" class="contextmenu">
-        <h3>contextmenu</h3>
+        <ul>
+            <li @click="remove">删除空间</li>
+        </ul>
     </div>
 </template>
 <script>
@@ -23,16 +25,30 @@ export default {
                 top: this.top - 90 + 'px'
             }
         }
+    },
+    methods: {
+        remove() {
+            this.$emit('remove');
+        }
     }
 }
 </script>
 <style>
 .contextmenu {
-    width: 200px;
-    padding: 10px 0;
+    width: 100px;
     background: #fefefe;
     box-shadow: 0 0 5px #ccc;
     border-radius: 4px;
     cursor: pointer;
+    padding: 5px 0;
+}
+.contextmenu ul li {
+    padding: 6px 20px; 
+    font-size: 14px;
+    color: #333;
+}
+.contextmenu ul li:hover {
+    background: #efefef;
+    color: #2d8cf0;
 }
 </style>

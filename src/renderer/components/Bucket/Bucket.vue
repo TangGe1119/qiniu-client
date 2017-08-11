@@ -1,7 +1,7 @@
 <template>
-    <div class="bucket" @contextmenu="handleContextMenu" @click="handleClick">
-        <img src="../../assets/images/folder.svg" alt="">
-        <p class="name">{{name}}</p>
+    <div data-type="bucket" class="bucket" @contextmenu="handleContextMenu" @click="handleClick">
+        <img data-type="bucket" src="../../assets/images/folder.svg" alt="">
+        <p data-type="bucket" class="name">{{name}}</p>
     </div>
 </template>
 <script>
@@ -24,7 +24,7 @@ export default {
 </script>
 <style>
 .bucket {
-    padding: 30px;
+    margin: 30px;
     cursor: pointer;
 }
 .bucket img {

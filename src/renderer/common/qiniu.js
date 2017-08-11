@@ -76,7 +76,6 @@ export default class Qiniu {
         const requestURI = `http://rs.qiniu.com/delete/${encodedEntryURI}`;
         const reqBody = '';
         const accessToken = Util.generateAccessToken(mac, requestURI, reqBody);
-
         const options = {
             uri: requestURI,
             headers: {
@@ -89,8 +88,45 @@ export default class Qiniu {
     }
 
     static getUploadOption() {
-
+        
     }
 
-    
+    static createBucket(ak, sk, bucket, region) {
+        let encodedBucketName = Util.urlsafeBase64Encode(bucket);
+        const mac = {
+            accessKey: ak,
+            secretKey: sk,
+        };
+        region = region ? 'region/' + region : '';
+        const requestURI = `http://rs.qiniu.com/mkbucketv2/${encodedBucketName}/${region}`;
+        const reqBody = '';
+        const accessToken = Util.generateAccessToken(mac, requestURI, reqBody);
+        const options = {
+            uri: requestURI,
+            headers: {
+                Authorization: accessToken,
+            },
+            json: true,
+        };
+        return rp(options);
+    }    
+
+    static removeBucket(ak, sk, bucket) {
+        console.log(bucket)
+        const mac = {
+            accessKey: ak,
+            secretKey: sk,
+        };
+        const requestURI = `http://rs.qiniu.com/drop/${bucket}`;
+        const reqBody = '';
+        const accessToken = Util.generateAccessToken(mac, requestURI, reqBody);
+        const options = {
+            uri: requestURI,
+            headers: {
+                Authorization: accessToken,
+            },
+            json: true,
+        };
+        return rp(options);
+    }
 }
