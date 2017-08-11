@@ -1,5 +1,5 @@
 <template>
-    <div class="bucket" @click="handleClick">
+    <div class="bucket" @contextmenu="handleContextMenu" @click="handleClick">
         <img src="../../assets/images/folder.svg" alt="">
         <p class="name">{{name}}</p>
     </div>
@@ -15,6 +15,9 @@ export default {
     methods: {
         handleClick() {
             this.$emit('click', this.name);
+        },
+        handleContextMenu($event) {
+            this.$emit('contextMenu', {bucket: this.name, e: $event});
         }
     }
 }

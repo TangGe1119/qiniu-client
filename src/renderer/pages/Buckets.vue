@@ -1,10 +1,13 @@
 <template>
     <div class="buckets">
         <div v-for="item in buckets" class="bucket-item">
-            <bucket @click="goDetail" :name="item"></bucket>
+            <bucket @click="goDetail" @contextMenu="showContextMenu" :name="item"></bucket>
         </div>
         <div class="setting" @click="showSettingMoal">
             <Icon type="settings"></Icon>
+        </div>
+        <div class="addIcon" @click="addBucket">
+            <Icon type="plus"></Icon>
         </div>
         <Modal
             v-model="settingModal"
@@ -27,18 +30,24 @@
                 <Button type="primary" size="large" @click="confirm">确定</Button>
             </div>
         </Modal>
+        <context-menu :top="top" :left="left" v-if="contextShow"></context-menu>
     </div>
 </template>
 <script>
 import {mapGetters, mapActions} from 'vuex';
 import Bucket from '@/components/Bucket/Bucket';
 import storage from '../common/storage';
+import ContextMenu from '@/components/ContextMenu/ContextMenu';
 const {dialog} = require('electron').remote;
 
 export default {
     data() {
         return {
             settingModal: false,
+            contextShow: false,
+            top: 0,
+            left: 0,
+            currentBucket: '',
             formItem: {
                 ak: '',
                 sk: '',
@@ -106,10 +115,20 @@ export default {
             if(path) {
                 this.formItem.downloadPath = path[0];
             }
+        },
+        showContextMenu({bucket, e}) {
+            this.contextShow = true;
+            this.left = e.clientX;
+            this.top = e.clientY;
+            this.currentBucket = bucket;
+        },
+        addBucket() {
+            console.log('add bucket');
         }
     },
     components: {
-        Bucket
+        Bucket,
+        ContextMenu
     }
 }
 </script>
@@ -122,20 +141,35 @@ export default {
     width: 160px;
 }
 .buckets .setting {
-    font-size: 50px;
-    width: 80px;
-    height: 80px;
-    line-height: 80px;
+    font-size: 40px;
+    width: 60px;
+    height: 60px;
+    line-height: 60px;
     text-align: center;
     border: 1px solid #ccc;
     border-radius: 50%;
     position: absolute;
-    bottom: 50px;
-    right: 50px;
+    bottom: 10px;
+    right: 10px;
     cursor: pointer;
 }
-.buckets .setting:hover {
+.buckets .addIcon {
+    font-size: 40px;
+    width: 60px;
+    height: 60px;
+    line-height: 60px;
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 50%;
+    position: absolute;
+    bottom: 80px;
+    right: 10px;
+    cursor: pointer;
+}
+.buckets .setting:hover, .buckets .addIcon:hover {
     color: #2d8cf0;
     border: 1px solid #2d8cf0;
+    transform: scale(1.1);
+    transition: all .1s ease-in-out;
 }
 </style>

@@ -29,7 +29,7 @@ function createWindow() {
         height: 768,
         useContentSize: true,
         width: 1366,
-        resizable: false,
+        resizable: process.env.NODE_ENV = 'development',
     })
 
     mainWindow.loadURL(winURL)

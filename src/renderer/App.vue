@@ -35,4 +35,17 @@ html, body, #app {
     overflow-y: auto;
     padding: 25px;
 }
+::-webkit-scrollbar {
+    width: 7px;  
+    height: 7px;  
+    background-color: #F5F5F5;  
+} 
+::-webkit-scrollbar-track {
+    background-color: #d9e2eb;  
+}  
+::-webkit-scrollbar-thumb {  
+    border-radius: 10px;  
+    box-shadow: inset 0 0 6px rgba(0,0,0,.3);  
+    background-color: #99a9bf;  
+}  
 </style>
