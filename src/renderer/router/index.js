@@ -27,11 +27,9 @@ const router =  new Router({
 })
 
 router.beforeEach((to, from, next) => {
-    if(to.path === '/nokey') return next();
-    let isSetKey = !storage.get('AK') || !storage.get('SK');
-    if(isSetKey) {
+    if ((to.path !== '/nokey') && (!storage.get('AK') || !storage.get('SK'))) {
+        // 非/nokey路径重定向
         next({path: '/nokey'});
-        return;
     }
     next();
 })
