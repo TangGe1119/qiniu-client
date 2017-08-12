@@ -43,11 +43,6 @@
                 'sk'
             ])
         },
-        created() {
-            if(this.ak && this.sk) {
-                this.$router.push('/buckets');
-            }
-        },
         methods: {
             ...mapActions([
                 'setKeys'
