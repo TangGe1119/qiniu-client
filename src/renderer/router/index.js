@@ -31,7 +31,7 @@ router.beforeEach((to, from, next) => {
         // 非/nokey路径重定向
         next({path: '/nokey'});
     }
-    next()
+    next();
 })
 
 export default router;
