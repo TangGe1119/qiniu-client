@@ -30,6 +30,7 @@
                 <Upload 
                     :before-upload="beforeUpload" 
                     :on-success="uploadSuccess"
+                    :on-error="uploadError"
                     :data="uploadData" 
                     ref="upload"
                     name="file" 
@@ -327,6 +328,11 @@ export default {
         uploadSuccess(response, file, fileList) {
             this.$Notice.success({
                 title: `${file.name}上传成功`
+            });
+        },
+        uploadError(error, file, fileList) {
+            this.$Notice.error({
+                title: `${file.name}上传失败`
             });
         }
     }
