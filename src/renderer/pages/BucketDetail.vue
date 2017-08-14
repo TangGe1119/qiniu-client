@@ -30,11 +30,12 @@
                 <Upload 
                     :before-upload="beforeUpload" 
                     :on-success="uploadSuccess"
+                    :on-error="uploadError"
                     :data="uploadData" 
                     ref="upload"
                     name="file" 
                     multiple 
-                    action="http://upload.qiniu.com/">
+                    :action="uploadURL">
                     <Button type="primary" icon="ios-cloud-upload-outline">选择文件</Button>
                     <div class="upload-tip" slot="tip"></div>
                 </Upload>
@@ -49,7 +50,8 @@ import {Dropdown, Button, Icon, DropdownMenu, DropdownItem} from 'iview';
 const {ipcRenderer} = require('electron');
 import copyTextToClipboard from '../common/copy';
 import Policy from '../common/policy';
-import Loading from '@/assets/images/loading.svg'
+import Loading from '@/assets/images/loading.svg';
+import Qiniu from '../common/qiniu';
 
 export default {
     data() {
@@ -106,6 +108,7 @@ export default {
             currentImg: {},
             selection: [],
             uploadModal: false,
+            uploadURL: '',
             uploadData: {},
             hasUpload: false
         }
@@ -143,6 +146,19 @@ export default {
                 desc: `${filename}下载成功`
             });
         });
+    },
+    beforeMount() {
+        let bucketName = this.$route.params.name
+        if (bucketName) {
+            Qiniu.autoZone(this.ak, bucketName).then(response => {
+                console.log('autoZone success')
+                this.uploadURL = `http://${response.up.src.main[0]}`
+            }).catch(error => {
+                // TODO
+                console.log('autoZone fail')
+                console.log(error)
+            })
+        }
     },
     methods: {
         ...mapActions([
@@ -327,6 +343,11 @@ export default {
         uploadSuccess(response, file, fileList) {
             this.$Notice.success({
                 title: `${file.name}上传成功`
+            });
+        },
+        uploadError(error, file, fileList) {
+            this.$Notice.error({
+                title: `${file.name}上传失败`
             });
         }
     }

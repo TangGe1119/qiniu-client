@@ -6,6 +6,20 @@ const rp = require('request-promise');
  * Qiniu module to implement all apis.
  */
 export default class Qiniu {
+    /**
+    * auto get the bucket zone
+    * @param ak       accessKey
+    * @param bucket   bucket name
+    */
+    static autoZone(ak, bucket) {
+        const requestURI = `https://uc.qbox.me/v2/query?ak=${ak}&bucket=${bucket}`;
+        const options = {
+            uri: requestURI,
+            json: true,
+        };
+        return rp(options);
+    }
+
     static buckets(ak, sk) {
         const mac = {
             accessKey: ak,
