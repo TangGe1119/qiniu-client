@@ -1,5 +1,5 @@
 <template>
-    <div data-type="bucket" class="bucket" @contextmenu="handleContextMenu" @click="handleClick">
+    <div data-type="bucket" class="bucket" @contextmenu.stop="handleContextMenu" @click.stop="handleClick">
         <img data-type="bucket" src="../../assets/images/folder.svg" alt="">
         <p data-type="bucket" class="name">{{name}}</p>
     </div>

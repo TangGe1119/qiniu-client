@@ -34,7 +34,26 @@ export const getBuckets = ({commit, state}) => {
 export const getList = ({commit, state}, {bucket, marker, prefix}) => {
     let ak = state.ak;
     let sk = state.sk;
-    return Qiniu.list(ak, sk, bucket, marker, prefix)
+    return Qiniu.list(ak, sk, bucket, marker, prefix);
+}
+
+export const getListByPage = ({commit, state}, {bucket, pageSize = 10, pageNum, marker='', prefix=''}) => {
+    let ak = state.ak;
+    let sk = state.sk;
+    return new Promise((resolve, reject) => {
+        Qiniu.list(ak, sk, bucket, marker, prefix).then(list => {
+            let data = list.items;
+            let start = pageSize * (pageNum - 1);
+            let end = pageSize * pageNum;
+            let sum = data.length;
+            let items = data.slice(start, end);
+            resolve({
+                items,
+                pageSize,
+                sum
+            });
+        }).catch(e => {reject(e)});
+    });
 }
 
 export const getDomain = ({commit, state}, bucket) => {

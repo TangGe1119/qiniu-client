@@ -60,7 +60,7 @@ export default class Qiniu {
      * @returns {Promise}
      * @memberof Qiniu
      */
-    static list(ak, sk, bucket, marker = '', prefix = '', limit = 100) {
+    static list(ak, sk, bucket, marker = '', prefix = '', limit = 10000) {
         const mac = {
             accessKey: ak,
             secretKey: sk,

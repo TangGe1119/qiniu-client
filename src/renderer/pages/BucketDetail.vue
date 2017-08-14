@@ -10,6 +10,13 @@
             </div>
         </div>
         <Table :columns="columns" :data="content" @on-selection-change="changeSelect"></Table>
+        <Page 
+            v-if="sum > 0" 
+            :total="sum" 
+            :current.sync="pageNum" 
+            :page-size="pageSize"
+            @on-change="changePage">
+        </Page>
         <Modal class-name="preview-modal" width="500" v-model="imgModal" style="text-align: center;">
             <h2 slot="header">{{currentImg.key}}</h2>
             <img :src="currentImg.src" style="max-width: 100%;">
@@ -110,7 +117,10 @@ export default {
             uploadModal: false,
             uploadURL: '',
             uploadData: {},
-            hasUpload: false
+            hasUpload: false,
+            pageNum: 1,
+            pageSize: 10,
+            sum: 0
         }
     },
     computed: {
@@ -134,10 +144,9 @@ export default {
         domain() {
             return this.domains[0]
         },
-        
     },
     created() {
-        this._getList();
+        this._getListByPage();
         this._getDomain();
         
         ipcRenderer.on('download-success', (event, filename) => {
@@ -163,14 +172,18 @@ export default {
     methods: {
         ...mapActions([
             'getList',
+            'getListByPage',
             'getDomain',
-            'deleteFile'
+            'deleteFile',
         ]),
-        _getList() {
-            this.getList({
-                bucket: this.name
+        _getListByPage() {
+            this.getListByPage({
+                bucket: this.name,
+                pageSize: this.pageSize,
+                pageNum: this.pageNum
             }).then(list => {
                 this.list = list.items;
+                this.sum = list.sum;
             }).catch(e => {console.log(e)});
         },
         _getDomain() {
@@ -283,7 +296,7 @@ export default {
             this.selection.forEach(item => {
                 this.download(item);
             });
-            this._getList();
+            this._getListByPage();
         },
         download(currentImg) {
             ipcRenderer.send('download', {
@@ -313,12 +326,12 @@ export default {
                 promiseArr.push(this._deleteOne(item));
             });
             Promise.all(promiseArr).then(() => {
-                this._getList();
+                this._getListByPage();
             });
         },
         delete(item) {
             this._deleteOne(item).then(() => {
-                this._getList();
+                this._getListByPage();
             });
         },
         uploadModalClose() {
@@ -349,6 +362,11 @@ export default {
             this.$Notice.error({
                 title: `${file.name}上传失败`
             });
+        },
+        changePage(page) {
+            console.log(page)
+            this.pageNum = page;
+            this._getListByPage();
         }
     }
 }
@@ -417,5 +435,9 @@ export default {
 .ivu-upload-list-file {
     font-size: 14px;
     padding: 6px;
+}
+.bucket-detail .ivu-page {
+    padding-top: 20px;
+    text-align: center;
 }
 </style>

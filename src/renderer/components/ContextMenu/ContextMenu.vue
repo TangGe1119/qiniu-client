@@ -1,7 +1,10 @@
 <template>
     <div :style="style" class="contextmenu">
         <ul>
-            <li @click="remove">删除空间</li>
+            <li v-if="!isBucket" @click.stop="refresh">刷新</li>
+            <li v-if="!isBucket" @click.stop="add">新建空间</li>
+            <li v-if="!isBucket" @click.stop="setting">基础设置</li>
+            <li v-if="isBucket"  @click.stop="remove">删除空间</li>
         </ul>
     </div>
 </template>
@@ -16,6 +19,10 @@ export default {
             type: Number,
             required: true
         },
+        type: {
+            type: String,
+            default: ''
+        }
     },
     computed: {
         style() {
@@ -24,11 +31,23 @@ export default {
                 left: this.left - 25 + 'px',
                 top: this.top - 90 + 'px'
             }
+        },
+        isBucket() {
+            return this.type === 'bucket';
         }
     },
     methods: {
         remove() {
             this.$emit('remove');
+        },
+        refresh() {
+            this.$emit('refresh');
+        },
+        add() {
+            this.$emit('add');
+        },
+        setting() {
+            this.$emit('setting');
         }
     }
 }
@@ -45,7 +64,7 @@ export default {
 .contextmenu ul li {
     padding: 6px 20px; 
     font-size: 14px;
-    color: #333;
+    color: #555;
 }
 .contextmenu ul li:hover {
     background: #efefef;

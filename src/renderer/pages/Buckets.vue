@@ -2,16 +2,6 @@
     <div class="buckets">
         <div v-for="(item, index) in buckets" class="bucket-item">
             <bucket @click="goDetail" @contextMenu="showContextMenu" :name="item"></bucket>
-            <Spin size="large" v-if="isRemoving[item]" fix>
-                <Icon type="load-c" size=22 class="spin-icon-load"></Icon>
-                <div>正在删除</div>
-            </Spin>
-        </div>
-        <div class="setting" @click="showSettingMoal">
-            <Icon type="settings"></Icon>
-        </div>
-        <div class="addIcon" @click="addBucket">
-            <Icon type="plus"></Icon>
         </div>
         <Modal v-model="settingModal">
             <h2 slot="header">基本设置</h2>
@@ -24,12 +14,12 @@
                 </Form-item>
                 <Form-item label="下载路径" prop="downloadPath" style="position: relative;">
                     <Input disabled :value="settingForm.downloadPath" placeholder="下载路径"></Input>
-                    <Button @click="chooseFolder" style="position: absolute;top: 1px;right: 1px;">选择文件夹</Button>
+                    <Button @click.stop="chooseFolder" style="position: absolute;top: 1px;right: 1px;">选择文件夹</Button>
                 </Form-item>
             </Form>
             <div slot="footer">
-                <Button size="large" @click="settingModal = false">取消</Button>
-                <Button type="primary" size="large" @click="confirmSetting">确定</Button>
+                <Button size="large" @click.stop="settingModal = false">取消</Button>
+                <Button type="primary" size="large" @click.stop="confirmSetting">确定</Button>
             </div>
         </Modal>
         <Modal v-model="addModal">
@@ -49,14 +39,18 @@
                 </Form-item>
             </Form>
             <div slot="footer">
-                <Button size="large" @click="addModal = false">取消</Button>
-                <Button type="primary" size="large" @click="confirmAdd">确定</Button>
+                <Button size="large" @click.stop="addModal = false">取消</Button>
+                <Button type="primary" size="large" @click.stop="confirmAdd">确定</Button>
             </div>
         </Modal>
         <context-menu 
-            @remove="remove" 
-            :top="top" 
-            :left="left" 
+            @remove="remove"
+            @add="addBucket"
+            @refresh="refresh"
+            @setting="showSettingMoal"
+            :top="top"
+            :left="left"
+            :type="contextType"
             v-if="contextShow">
         </context-menu>
     </div>
@@ -73,6 +67,7 @@ export default {
         return {
             settingModal: false,
             contextShow: false,
+            contextType: '',
             addModal: false,
             top: 0,
             left: 0,
@@ -96,8 +91,7 @@ export default {
                     { required: true, message: '空间名称不能为空', trigger: 'blur' },
                     { pattern: /^[\w\-]/, message: '空间名称只能为字母、短划线-、下划线_、数字组合', trigger: 'blur' },
                 ],
-            },
-            isRemoving: {}
+            }
         }
     },
     computed: {
@@ -112,9 +106,15 @@ export default {
         document.querySelector('body').addEventListener('click', e => {
             this.contextShow = false;
         });
-        document.querySelector('body').addEventListener('contextmenu', e => {
-            if(e.target.dataset.type !== 'bucket') {
-                this.contextShow = false;
+        document.querySelector('.buckets').addEventListener('contextmenu', e => {
+            this.contextShow = true;
+            this.contextType = '';
+            this.left = this._calcX(e);
+            this.top = e.pageY;
+            if(e.target.dataset.type === 'bucket') {
+                this.contextShow = 'bucket';
+            }else {
+                this.contextType = ''
             }
         });
         // if(this.buckets && this.buckets.length > 0) return;
@@ -122,9 +122,6 @@ export default {
             this.settingForm.ak = this.ak;
             this.settingForm.sk = this.sk;
             this.settingForm.downloadPath = this.downloadPath;
-            this.buckets.forEach(item => {
-                this.isRemoving[item] = false;
-            });
         }).catch(() => {
             this.$router.push('/nokey');
         });
@@ -137,6 +134,13 @@ export default {
             'createBucket',
             'removeBucket'
         ]),
+        _calcX(e) {
+            let bodyWidth = document.querySelector('body').clientWidth;
+            if(bodyWidth - e.pageX < 100) {
+                return e.pageX - 100;
+            }
+            return e.pageX;
+        },
         goDetail(name) {
             this.$router.push({
                 name: 'bucketDetail',
@@ -146,6 +150,7 @@ export default {
             })
         },
         showSettingMoal() {
+            this.contextShow = false;
             this.settingModal = true;
         },
         confirmSetting() {
@@ -179,26 +184,26 @@ export default {
         },
         showContextMenu({bucket, e}) {
             this.contextShow = true;
-            this.left = e.clientX;
-            this.top = e.clientY;
+            this.contextType = 'bucket';
+            this.left = this._calcX(e);
+            this.top = e.pageY;
             this.currentBucket = bucket;
         },
         addBucket() {
+            this.contextShow = false;
             this.addModal = true;
         },
         remove() {
-            this.isRemoving[this.currentBucket] = true;
+            this.contextShow = false;
             this.removeBucket({bucket: this.currentBucket}).then(() => {
                 this.$Notice.success({
                     title: `空间${this.currentBucket}删除成功`
                 });
                 this.getBuckets();
-                this.isRemoving[this.currentBucket] = false;
             }).catch(e => {
                 this.$Notice.error({
                     title: '空间删除失败'
                 });
-                this.isRemoving[this.currentBucket] = false;
             });
         },
         confirmAdd() {
@@ -222,6 +227,23 @@ export default {
                         title: `空间${bucket}创建失败`
                     });
                 });
+            });
+        },
+        refresh() {
+            this.contextShow = false;
+            this.$Loading.config({
+                color: '#19be6b',
+                failedColor: '#f0ad4e',
+                height: 5
+            });
+            this.$Loading.start();
+            this.getBuckets().then(() => {
+                this.$Loading.finish();
+                this.$Notice.success({
+                    title: '刷新成功'
+                });
+            }).catch(e => {
+                this.$Loading.error()
             });
         }
     },
