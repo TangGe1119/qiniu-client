@@ -20,6 +20,14 @@ export default class Qiniu {
         return rp(options);
     }
 
+    /**
+     * get all buckets by ak and sk
+     * @static
+     * @param {string} ak 
+     * @param {string} sk 
+     * @returns {Promise}
+     * @memberof Qiniu
+     */
     static buckets(ak, sk) {
         const mac = {
             accessKey: ak,
@@ -40,6 +48,18 @@ export default class Qiniu {
         return rp(options);
     }
 
+    /**
+     * get list in current bucket
+     * @static
+     * @param {string} ak 
+     * @param {string} sk 
+     * @param {string} bucket 
+     * @param {string} [marker=''] 
+     * @param {string} [prefix=''] 
+     * @param {number} [limit=100] 
+     * @returns {Promise}
+     * @memberof Qiniu
+     */
     static list(ak, sk, bucket, marker = '', prefix = '', limit = 100) {
         const mac = {
             accessKey: ak,
@@ -60,6 +80,15 @@ export default class Qiniu {
         return rp(options);
     }
 
+    /**
+     * get current bucket's domain
+     * @static
+     * @param {string} ak 
+     * @param {string} sk 
+     * @param {string} bucket 
+     * @returns {Promise}
+     * @memberof Qiniu
+     */
     static domain(ak, sk, bucket) {
         const mac = {
             accessKey: ak,
@@ -80,6 +109,16 @@ export default class Qiniu {
         return rp(options);
     }
 
+    /**
+     * delete file in current bucket
+     * @static
+     * @param {string} ak 
+     * @param {string} sk 
+     * @param {string} bucket 
+     * @param {string} key 
+     * @returns {Promise}
+     * @memberof Qiniu
+     */
     static delete(ak, sk, bucket, key) {
         const entry = `${bucket}:${key}`;
         const encodedEntryURI = Util.urlsafeBase64Encode(entry);
@@ -101,10 +140,17 @@ export default class Qiniu {
         return rp(options);
     }
 
-    static getUploadOption() {
-        
-    }
 
+    /**
+     * create bucket
+     * @static
+     * @param {string} ak 
+     * @param {string} sk 
+     * @param {string} bucket 
+     * @param {string} region 
+     * @returns {Promise}
+     * @memberof Qiniu
+     */
     static createBucket(ak, sk, bucket, region) {
         let encodedBucketName = Util.urlsafeBase64Encode(bucket);
         const mac = {
@@ -125,6 +171,15 @@ export default class Qiniu {
         return rp(options);
     }    
 
+    /**
+     * delete bucket
+     * @static
+     * @param {string} ak 
+     * @param {string} sk 
+     * @param {string} bucket 
+     * @returns {Promise}
+     * @memberof Qiniu
+     */
     static removeBucket(ak, sk, bucket) {
         console.log(bucket)
         const mac = {

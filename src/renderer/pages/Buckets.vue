@@ -1,7 +1,11 @@
 <template>
     <div class="buckets">
-        <div v-for="item in buckets" class="bucket-item">
+        <div v-for="(item, index) in buckets" class="bucket-item">
             <bucket @click="goDetail" @contextMenu="showContextMenu" :name="item"></bucket>
+            <Spin size="large" v-if="isRemoving[item]" fix>
+                <Icon type="load-c" size=22 class="spin-icon-load"></Icon>
+                <div>正在删除</div>
+            </Spin>
         </div>
         <div class="setting" @click="showSettingMoal">
             <Icon type="settings"></Icon>
@@ -92,7 +96,8 @@ export default {
                     { required: true, message: '空间名称不能为空', trigger: 'blur' },
                     { pattern: /^[\w\-]/, message: '空间名称只能为字母、短划线-、下划线_、数字组合', trigger: 'blur' },
                 ],
-            }
+            },
+            isRemoving: {}
         }
     },
     computed: {
@@ -117,6 +122,9 @@ export default {
             this.settingForm.ak = this.ak;
             this.settingForm.sk = this.sk;
             this.settingForm.downloadPath = this.downloadPath;
+            this.buckets.forEach(item => {
+                this.isRemoving[item] = false;
+            });
         }).catch(() => {
             this.$router.push('/nokey');
         });
@@ -179,15 +187,18 @@ export default {
             this.addModal = true;
         },
         remove() {
+            this.isRemoving[this.currentBucket] = true;
             this.removeBucket({bucket: this.currentBucket}).then(() => {
                 this.$Notice.success({
                     title: `空间${this.currentBucket}删除成功`
                 });
                 this.getBuckets();
+                this.isRemoving[this.currentBucket] = false;
             }).catch(e => {
                 this.$Notice.error({
                     title: '空间删除失败'
                 });
+                this.isRemoving[this.currentBucket] = false;
             });
         },
         confirmAdd() {
@@ -202,9 +213,14 @@ export default {
                     this.$Notice.success({
                         title: `空间${bucket}创建成功`
                     });
+                    this.addForm.bucket = '';
+                    this.addForm.region = 'default';
                     this.getBuckets();
                 }).catch(e => {
                     console.log(e)
+                    this.$Notice.error({
+                        title: `空间${bucket}创建失败`
+                    });
                 });
             });
         }
@@ -224,6 +240,8 @@ export default {
 .buckets .bucket-item {
     display: inline-block;
     width: 160px;
+    height: 180px;
+    position: relative;
 }
 .buckets .setting {
     font-size: 40px;
@@ -256,5 +274,16 @@ export default {
     border: 1px solid #2d8cf0;
     transform: scale(1.1);
     transition: all .1s ease-in-out;
+}
+.buckets .ivu-spin-fix {
+    background: rgba(255, 255, 255, .8);
+}
+.spin-icon-load {
+    animation: ani-spin 1s linear infinite;
+}
+@keyframes ani-spin {
+    from { transform: rotate(0deg);}
+    50%  { transform: rotate(180deg);}
+    to   { transform: rotate(360deg);}
 }
 </style>
