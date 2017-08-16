@@ -1,10 +1,6 @@
-// load Util class
-import axios from 'axios';
 import Util from './util';
 const rp = require('request-promise');
-/**
- * Qiniu module to implement all apis.
- */
+
 export default class Qiniu {
     /**
     * auto get the bucket zone
@@ -199,7 +195,7 @@ export default class Qiniu {
     }
 
     /**
-     * 重命名文件
+     * rename file
      * @param {string} ak 
      * @param {string} sk 
      * @param {string} bucket 
