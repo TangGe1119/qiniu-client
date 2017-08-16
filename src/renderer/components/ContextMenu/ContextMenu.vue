@@ -56,7 +56,7 @@ export default {
 .contextmenu {
     width: 100px;
     background: #fefefe;
-    box-shadow: 0 0 5px #ccc;
+    box-shadow: 0 0 10px #ccc;
     border-radius: 4px;
     cursor: pointer;
     padding: 5px 0;

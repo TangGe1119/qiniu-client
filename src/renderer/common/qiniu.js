@@ -181,12 +181,41 @@ export default class Qiniu {
      * @memberof Qiniu
      */
     static removeBucket(ak, sk, bucket) {
-        console.log(bucket)
         const mac = {
             accessKey: ak,
             secretKey: sk,
         };
         const requestURI = `http://rs.qiniu.com/drop/${bucket}`;
+        const reqBody = '';
+        const accessToken = Util.generateAccessToken(mac, requestURI, reqBody);
+        const options = {
+            uri: requestURI,
+            headers: {
+                Authorization: accessToken,
+            },
+            json: true,
+        };
+        return rp(options);
+    }
+
+    /**
+     * 重命名文件
+     * @param {string} ak 
+     * @param {string} sk 
+     * @param {string} bucket 
+     * @param {string} src 
+     * @param {string} dest 
+     */
+    static renameFile(ak, sk, bucket, src, dest) {
+        const mac = {
+            accessKey: ak,
+            secretKey: sk,
+        };
+        src = `${bucket}:${src}`;
+        dest = `${bucket}:${dest}`;
+        let encodedEntryURISrc = Util.urlsafeBase64Encode(src);
+        let encodedEntryURIDest = Util.urlsafeBase64Encode(dest);
+        const requestURI = `http://rs.qiniu.com/move/${encodedEntryURISrc}/${encodedEntryURIDest}`;
         const reqBody = '';
         const accessToken = Util.generateAccessToken(mac, requestURI, reqBody);
         const options = {

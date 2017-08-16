@@ -43,6 +43,9 @@ export const getListByPage = ({commit, state}, {bucket, pageSize = 10, pageNum, 
     return new Promise((resolve, reject) => {
         Qiniu.list(ak, sk, bucket, marker, prefix).then(list => {
             let data = list.items;
+            data.sort((a, b) => {
+                return b.putTime - a.putTime;
+            });
             let start = pageSize * (pageNum - 1);
             let end = pageSize * pageNum;
             let sum = data.length;
@@ -83,4 +86,10 @@ export const removeBucket = ({commit, state}, {bucket}) => {
     let ak = state.ak;
     let sk = state.sk;
     return Qiniu.removeBucket(ak, sk, bucket);
+}
+
+export const renameFile = ({commit, state}, {bucket, src, dest}) => {
+    let ak = state.ak;
+    let sk = state.sk;
+    return Qiniu.renameFile(ak, sk, bucket, src, dest);
 }
