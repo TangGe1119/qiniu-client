@@ -51,7 +51,8 @@
             :top="top"
             :left="left"
             :type="contextType"
-            v-if="contextShow">
+            v-show="contextShow"
+            ref="contextMenu">
         </context-menu>
     </div>
 </template>
@@ -110,7 +111,7 @@ export default {
             this.contextShow = true;
             this.contextType = '';
             this.left = this._calcX(e);
-            this.top = e.pageY;
+            this.top = this._calcY(e);
             if(e.target.dataset.type === 'bucket') {
                 this.contextShow = 'bucket';
             }else {
@@ -140,6 +141,14 @@ export default {
                 return e.pageX - 100;
             }
             return e.pageX;
+        },
+        _calcY(e) {
+            let bodyHeight = document.querySelector('body').clientHeight;
+            const contextMenuHeight = this.$refs.contextMenu.$el.clientHeight
+            if(bodyHeight - e.pageY < contextMenuHeight + 20) {
+                return e.pageY - contextMenuHeight;
+            }
+            return e.pageY;
         },
         goDetail(name) {
             this.$router.push({

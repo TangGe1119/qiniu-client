@@ -1,25 +1,20 @@
-import {
-    app,
-    BrowserWindow,
-    ipcMain,
-    dialog
-} from 'electron'
-const fs = require('fs');
-const path = require('path');
-const request = require('request');
+import { app, BrowserWindow } from 'electron'
 
 /**
  * Set `__static` path to static files in production
  * https://simulatedgreg.gitbooks.io/electron-vue/content/en/using-static-assets.html
  */
 if (process.env.NODE_ENV !== 'development') {
-    global.__static = require('path').join(__dirname, '/static').replace(/\\/g, '\\\\')
+    global.__static = require('path')
+        .join(__dirname, '/static')
+        .replace(/\\/g, '\\\\')
 }
 
 let mainWindow
-const winURL = process.env.NODE_ENV === 'development' ?
-    `http://localhost:9080` :
-    `file://${__dirname}/index.html`
+const winURL =
+    process.env.NODE_ENV === 'development'
+        ? `http://localhost:9080`
+        : `file://${__dirname}/index.html`
 
 function createWindow() {
     /**
@@ -29,10 +24,12 @@ function createWindow() {
         height: 768,
         useContentSize: true,
         width: 1366,
-        resizable: process.env.NODE_ENV === 'development',
+        resizable: process.env.NODE_ENV === 'development'
     })
 
-    mainWindow.loadURL(winURL)
+    mainWindow.loadURL(winURL) // 开发时直接全屏
+
+    process.env.NODE_ENV === 'development' && mainWindow.maximize()
 
     mainWindow.on('closed', () => {
         mainWindow = null
@@ -53,24 +50,8 @@ app.on('activate', () => {
     }
 })
 
-fs.exists('./downloads', exists => {
-    if(!exists) {
-        fs.mkdirSync("./downloads");
-    }
-});
-
-global.rootPath = path.resolve('./downloads');
-
-function downloadFile(uri, filename, callback){
-    var stream = fs.createWriteStream(filename);
-    request(uri).pipe(stream).on('close', callback); 
-}
-
-ipcMain.on('download', (event, {url, downloadPath, filename}) => {
-    downloadFile(url, path.resolve(downloadPath, filename), function() {
-        event.sender.send('download-success', filename);
-    });
-})
+require('./controllers/download')
+require('./controllers/clipboard')
 
 /**
  * Auto Updater

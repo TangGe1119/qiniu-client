@@ -72,8 +72,8 @@
 <script>
 import {mapActions, mapGetters} from 'vuex';
 import {Dropdown, Button, Icon, DropdownMenu, DropdownItem} from 'iview';
-const {ipcRenderer} = require('electron');
-import copyTextToClipboard from '../common/copy';
+import {ipcRenderer, clipboard} from 'electron';
+// import copyTextToClipboard from '../common/copy';
 import Policy from '../common/policy';
 import Loading from '@/assets/images/loading.svg';
 import Qiniu from '../common/qiniu';
@@ -183,6 +183,11 @@ export default {
             this.$Notice.success({
                 title: '下载成功',
                 desc: `${filename}下载成功`
+            });
+        });
+        ipcRenderer.on('clipboard-success', (event) => {
+            this.$Notice.success({
+                title: '链接复制成功'
             });
         });
     },
@@ -314,8 +319,9 @@ export default {
             }else if(name === 'delete') {
                 this.delete(this.list[index]);
             }else if(name === 'copy') {
-                copyTextToClipboard(this.getUrl(this.list[index].key)).then(() => {
-                    this.$Message.info('复制成功');
+                clipboard.writeText(this.getUrl(this.list[index].key))
+                this.$Notice.success({
+                    title: '链接复制成功'
                 });
             }else if(name === 'rename') {
                 this.renameModal = true;
