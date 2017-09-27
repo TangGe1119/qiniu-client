@@ -51,7 +51,6 @@ app.on('activate', () => {
 })
 
 require('./controllers/download')
-require('./controllers/clipboard')
 
 /**
  * Auto Updater

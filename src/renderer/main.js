@@ -1,9 +1,11 @@
-import Vue from 'vue';
-import axios from 'axios';
+import Vue from 'vue'
+import axios from 'axios'
 
-import iView from 'iview';
-import 'iview/dist/styles/iview.css';
-Vue.use(iView);
+import iView from 'iview'
+import 'iview/dist/styles/iview.css'
+Vue.use(iView)
+
+import './assets/styles/common.css'
 
 import App from './App'
 import router from './router'
@@ -19,4 +21,4 @@ new Vue({
     router,
     store,
     render: h => h(App)
-});
+})

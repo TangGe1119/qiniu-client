@@ -1,14 +1,14 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import storage from '../common/storage';
+import storage from '../common/storage'
 
 Vue.use(Router)
 
-const router =  new Router({
+const router = new Router({
     routes: [
         {
             path: '/',
-            component: require('@/pages/Buckets')
+            component: require('@/pages/BucketList')
         },
         {
             path: '/nokey',
@@ -27,11 +27,11 @@ const router =  new Router({
 })
 
 router.beforeEach((to, from, next) => {
-    if ((to.path !== '/nokey') && (!storage.get('AK') || !storage.get('SK'))) {
+    if (to.path !== '/nokey' && (!storage.get('AK') || !storage.get('SK'))) {
         // 非/nokey路径重定向
-        next({path: '/nokey'});
+        next({ path: '/nokey' })
     }
-    next();
+    next()
 })
 
-export default router;
+export default router

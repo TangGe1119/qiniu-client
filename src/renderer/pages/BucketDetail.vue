@@ -26,30 +26,36 @@
             <div slot="footer">
                 <p class="desc">文件大小：{{this.fileSize(currentImg.fsize)}}</p>
                 <p class="desc">最后更新：{{this.formatDate(currentImg.putTime)}}</p>
-                <p class="desc">外链地址：<a>{{currentImg.url}}</a> 
+                <p class="desc">外链地址：<a @click="copyLink(currentImg.url)">{{currentImg.url}}</a> 
                     <Button @click="download(currentImg)" style="font-size: 16px;padding: 0 15px;margin-left: 10px;" icon="ios-cloud-download-outline"></Button> 
                 </p>
             </div>
         </Modal>
-        <Modal class-name="upload-modal" width="500" v-model="uploadModal" style="text-align: center;">
+        <Modal 
+            class-name="upload-modal"
+            width="500"
+            :closable="false"
+            :mask-closable="false"
+            v-model="uploadModal"
+            style="text-align: center;">
             <div slot="header">
                 <h2>上传文件</h2>
             </div>
-            <p class="tip-text" v-if="!hasUpload">请选择要上传的文件</p>
+            <Upload
+                :before-upload="beforeUpload" 
+                :on-success="uploadSuccess"
+                :on-error="uploadError"
+                :on-remove="removeFile"
+                :data="uploadData" 
+                :action="uploadURL"
+                ref="upload"
+                name="file" 
+                multiple>
+                <Button type="primary" icon="ios-cloud-upload-outline">请选择要上传的文件</Button>
+                <div class="upload-tip" slot="tip"></div>
+            </Upload>
             <div slot="footer">
-                <Upload 
-                    :before-upload="beforeUpload" 
-                    :on-success="uploadSuccess"
-                    :on-error="uploadError"
-                    :data="uploadData" 
-                    ref="upload"
-                    name="file" 
-                    multiple 
-                    :action="uploadURL">
-                    <Button type="primary" icon="ios-cloud-upload-outline">选择文件</Button>
-                    <div class="upload-tip" slot="tip"></div>
-                </Upload>
-                <Button @click="uploadModalClose">关闭</Button>
+                <Button @click="uploadModalClose">关 闭</Button>
             </div>
         </Modal>
         <Modal class-name="rename-modal" width="500" v-model="renameModal" style="text-align: center;">
@@ -73,7 +79,6 @@
 import {mapActions, mapGetters} from 'vuex';
 import {Dropdown, Button, Icon, DropdownMenu, DropdownItem} from 'iview';
 import {ipcRenderer, clipboard} from 'electron';
-// import copyTextToClipboard from '../common/copy';
 import Policy from '../common/policy';
 import Loading from '@/assets/images/loading.svg';
 import Qiniu from '../common/qiniu';
@@ -97,15 +102,29 @@ export default {
                 },
                 {
                     title: '文件类型',
-                    key: 'mimeType'
+                    key: 'mimeType',
+                    filters: [
+                        {
+                            label: '仅图片',
+                            value: 1
+                        }
+                    ],
+                    filterMultiple: false,
+                    filterMethod:  (value, row) => {
+                        if (value === 1) {
+                            return this._isImageMimeType(row.mimeType)
+                        }
+                    }
                 },
                 {
                     title: '文件大小',
-                    key: 'fsize'
+                    key: 'fsize',
+                    sortable: true
                 },
                 {
                     title: '修改时间',
-                    key: 'putTime'
+                    key: 'putTime',
+                    sortable: true
                 },
                 {
                     title: '操作',
@@ -209,26 +228,6 @@ export default {
             'deleteFile',
             'renameFile'
         ]),
-        _getListByPage() {
-            this.getListByPage({
-                bucket: this.name,
-                pageSize: this.pageSize,
-                pageNum: this.pageNum
-            }).then(list => {
-                this.list = list.items;
-                this.sum = list.sum;
-            }).catch(e => {console.log(e)});
-        },
-        _getDomain() {
-            this.getDomain(this.name).then(domains => {
-                this.domains = domains;
-                this.domain = domains[0];
-            }).catch(e => {
-                this.$Notice.error({
-                    title: '获取空间域名失败'
-                });
-            });
-        },
         fileSize(size) {
             if(size > 1048576) {
                 size = (size / 1048576).toFixed(2) + ' MB';
@@ -319,10 +318,7 @@ export default {
             }else if(name === 'delete') {
                 this.delete(this.list[index]);
             }else if(name === 'copy') {
-                clipboard.writeText(this.getUrl(this.list[index].key))
-                this.$Notice.success({
-                    title: '链接复制成功'
-                });
+                this.copyLink(this.getUrl(this.list[index].key))
             }else if(name === 'rename') {
                 this.renameModal = true;
                 this.newFilename = '';
@@ -346,16 +342,6 @@ export default {
                 downloadPath: this.downloadPath, 
                 filename: currentImg.key
             });
-        },
-        _deleteOne(item) {
-            return new Promise((resolve, reject) => {
-                this.deleteFile({bucket: this.name, key: item.key}).then(() => {
-                    this.$Notice.success({
-                        title: `${item.key}删除成功`
-                    });
-                    resolve();
-                }).catch(e => {reject()});
-            })
         },
         delectChecked() {
             if(this.selection.length === 0) {
@@ -405,6 +391,10 @@ export default {
                 title: `${file.name}上传失败`
             });
         },
+        removeFile(file, fileList) {
+            let item = {key: file.name}
+            this._deleteOne(item)
+        },
         changePage(page) {
             this.pageNum = page;
             this._getListByPage();
@@ -437,12 +427,51 @@ export default {
                     }
                 });
             })
-            
+        },
+        copyLink(text) {
+            clipboard.writeText(text)
+            this.$Notice.success({
+                title: '链接复制成功'
+            });
+        },
+        _getListByPage() {
+            this.getListByPage({
+                bucket: this.name,
+                pageSize: this.pageSize,
+                pageNum: this.pageNum
+            }).then(list => {
+                this.list = list.items;
+                this.sum = list.sum;
+            }).catch(e => {console.log(e)});
+        },
+        _getDomain() {
+            this.getDomain(this.name).then(domains => {
+                this.domains = domains;
+                this.domain = domains[0];
+            }).catch(e => {
+                this.$Notice.error({
+                    title: '获取空间域名失败'
+                });
+            });
+        },
+        _deleteOne(item) {
+            return new Promise((resolve, reject) => {
+                this.deleteFile({bucket: this.name, key: item.key}).then(() => {
+                    this.$Notice.success({
+                        title: `${item.key}删除成功`
+                    });
+                    resolve();
+                }).catch(e => {reject()});
+            })
         },
         _getExtName(filename) {
             let ext = /\.[^\.]+$/.exec(filename);
             if(!ext || !Array.isArray(ext) || ext.length === 0) return '';
             return ext[0];
+        },
+        _isImageMimeType(mime) {
+            let imageMimeTypes = ['image/png', 'image/jpeg', 'image/bmp', 'image/gif', 'image/svg+xml', 'image/x-icon']
+            return imageMimeTypes.includes(mime)
         }
     }
 }
@@ -479,7 +508,7 @@ export default {
 }
 .upload-modal .ivu-upload {
     display: inline-block;
-    margin-right: 5px;
+    margin-top: 5px;
 }
 .upload-modal .ivu-modal-body {
     height: 316px;
@@ -489,16 +518,13 @@ export default {
     position: relative;
 }
 .upload-modal .ivu-upload-list {
-    position: absolute;
-    top: 50px;
-    left: 20px;
     width: calc(100% - 20px);
-    height: 300px;
+    margin-left: 10px;
     overflow: auto;
     text-align: left;
 }
-.upload-modal .ivu-upload-list-remove {
-    display: none;
+.ivu-upload {
+    width: 100%;
 }
 .upload-modal .tip-text {
     text-align: center;
