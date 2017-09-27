@@ -96,11 +96,12 @@ export default {
                 },
                 {
                     title: '文件名',
-                    width: 500,
+                    width: 400,
                     key: 'key'
                 },
                 {
                     title: '文件类型',
+                    width: 150,
                     key: 'mimeType',
                     filters: [
                         {
@@ -117,6 +118,7 @@ export default {
                 },
                 {
                     title: '文件大小',
+                    width: 150,
                     key: 'fsize',
                     sortable: true,
                     sortMethod: (a, b, type) => {
