@@ -1,7 +1,20 @@
 <template>
-    <div class="buckets">
-        <div v-for="(item, index) in buckets" class="bucket-item">
-            <bucket @click="goDetail" @contextMenu="showContextMenu" :name="item"></bucket>
+    <div class="layout">
+        <div class="left-menu">
+            <Menu :active-name="activeMenu" @on-select="selectMenuItem" theme="dark" width="200">
+                <MenuItem v-for="(item, index) in buckets" :key="index" :name="index">
+                    <Icon type="ios-folder" :size="20"></Icon>
+                    <span class="layout-text">{{ item }}</span>
+                    <Icon @click.native.stop="remove(item, index)" class="del-bucket-btn" type="ios-close-empty" :size="22"></Icon>
+                </MenuItem>
+            </Menu>
+            <button class="add-bucket-btn" @click="addBucket">
+                <Icon type="plus-round"></Icon>&nbsp;&nbsp;添加Bucket
+            </Button>
+            <Icon @click.native="showSettingMoal" title="基本设置" class="setting-icon" type="ios-gear" :size="32"></Icon>
+        </div>
+        <div class="right-content">
+            <bucket-detail :name="currentBucket"></bucket-detail>
         </div>
         <Modal v-model="settingModal">
             <h2 slot="header">基本设置</h2>
@@ -22,7 +35,7 @@
                 <Button type="primary" size="large" @click.stop="confirmSetting">确定</Button>
             </div>
         </Modal>
-        <Modal v-model="addModal">
+        <Modal v-model="addModal" :closable="false" :mask-closable="false" :loading="true" @on-ok="confirmAdd">
             <h2 slot="header">新建Bucket</h2>
             <Form ref="addForm" :model="addForm" :label-width="100" :rules="addRule">
                 <Form-item label="空间名称" prop="bucket">
@@ -38,41 +51,23 @@
                     </Select>
                 </Form-item>
             </Form>
-            <div slot="footer">
-                <Button size="large" @click.stop="addModal = false">取消</Button>
-                <Button type="primary" size="large" @click.stop="confirmAdd">确定</Button>
-            </div>
         </Modal>
-        <context-menu 
-            @remove="remove"
-            @add="addBucket"
-            @refresh="refresh"
-            @setting="showSettingMoal"
-            :top="top"
-            :left="left"
-            :type="contextType"
-            v-show="contextShow"
-            ref="contextMenu">
-        </context-menu>
     </div>
 </template>
 <script>
 import {mapGetters, mapActions} from 'vuex';
-import Bucket from '@/components/Bucket/Bucket';
+import BucketDetail from '../components/BucketDetail/BucketDetail'
 import storage from '../common/storage';
-import ContextMenu from '@/components/ContextMenu/ContextMenu';
+import confirm from '../components/Confirm'
+
 const {dialog} = require('electron').remote;
 
 export default {
     data() {
         return {
             settingModal: false,
-            contextShow: false,
-            contextType: '',
             addModal: false,
-            top: 0,
-            left: 0,
-            currentBucket: '',
+            activeMenu: '',
             settingForm: {
                 ak: '',
                 sk: '',
@@ -101,28 +96,24 @@ export default {
             'ak',
             'sk',
             'downloadPath'
-        ])
+        ]),
+        currentBucket() {
+            return this.buckets[+this.$route.params.id]
+        }
+    },
+    watch: {
+        '$route.params.id'(newId) {
+            this.activeMenu = +newId
+        }
     },
     mounted() {
-        document.querySelector('body').addEventListener('click', e => {
-            this.contextShow = false;
-        });
-        document.querySelector('.buckets').addEventListener('contextmenu', e => {
-            this.contextShow = true;
-            this.contextType = '';
-            this.left = this._calcX(e);
-            this.top = this._calcY(e);
-            if(e.target.dataset.type === 'bucket') {
-                this.contextShow = 'bucket';
-            }else {
-                this.contextType = ''
-            }
-        });
-        // if(this.buckets && this.buckets.length > 0) return;
         this.getBuckets().then(() => {
             this.settingForm.ak = this.ak;
             this.settingForm.sk = this.sk;
             this.settingForm.downloadPath = this.downloadPath;
+            this.$nextTick(() => {
+                this.activeMenu = +this.$route.params.id
+            })
         }).catch(() => {
             this.$router.push('/nokey');
         });
@@ -135,20 +126,8 @@ export default {
             'createBucket',
             'removeBucket'
         ]),
-        _calcX(e) {
-            let bodyWidth = document.querySelector('body').clientWidth;
-            if(bodyWidth - e.pageX < 100) {
-                return e.pageX - 100;
-            }
-            return e.pageX;
-        },
-        _calcY(e) {
-            let bodyHeight = document.querySelector('body').clientHeight;
-            const contextMenuHeight = this.$refs.contextMenu.$el.clientHeight
-            if(bodyHeight - e.pageY < contextMenuHeight + 20) {
-                return e.pageY - contextMenuHeight;
-            }
-            return e.pageY;
+        selectMenuItem(index) {
+            this.$router.replace(`/bucket/${index}`)
         },
         goDetail(name) {
             this.$router.push({
@@ -159,7 +138,6 @@ export default {
             })
         },
         showSettingMoal() {
-            this.contextShow = false;
             this.settingModal = true;
         },
         confirmSetting() {
@@ -191,29 +169,38 @@ export default {
                 this.settingForm.downloadPath = path[0];
             }
         },
-        showContextMenu({bucket, e}) {
-            this.contextShow = true;
-            this.contextType = 'bucket';
-            this.left = this._calcX(e);
-            this.top = e.pageY;
-            this.currentBucket = bucket;
-        },
         addBucket() {
-            this.contextShow = false;
             this.addModal = true;
         },
-        remove() {
-            this.contextShow = false;
-            this.removeBucket({bucket: this.currentBucket}).then(() => {
-                this.$Notice.success({
-                    title: `空间${this.currentBucket}删除成功`
-                });
-                this.getBuckets();
-            }).catch(e => {
-                this.$Notice.error({
-                    title: '空间删除失败'
-                });
-            });
+        remove(bucket, index) {
+            confirm({
+                title: '删除Bucket',
+                content: `此操作将删除${bucket}中的所有数据，且无法恢复，是否确认删除？`,
+                loading: true,
+                ok: (_close) => {
+                    this.removeBucket({bucket}).then(() => {
+                        this.$Notice.success({
+                            title: `空间${bucket}删除成功`
+                        });
+                        return this.getBuckets();
+                    }).then(buckets => {
+                        _close()
+                        // 如果选中的bucket被删除了 那么就跳转到第一个
+                        if(index === +this.$route.params.id) {
+                            this.$router.replace('/bucket/0')
+                        }else if(index < +this.$route.params.id) {
+                            let index = +this.$route.params.id - 1
+                            this.$router.replace(`/bucket/${index}`)
+                        }
+                        
+                    }).catch(e => {
+                        this.$Notice.error({
+                            title: '空间删除失败'
+                        });
+                    });
+                },
+                cancel: (_close) => {_close()}
+            })
         },
         confirmAdd() {
             this.$refs['addForm'].validate((valid) => {
@@ -229,7 +216,7 @@ export default {
                     });
                     this.addForm.bucket = '';
                     this.addForm.region = 'default';
-                    this.getBuckets();
+                    return this.getBuckets();
                 }).catch(e => {
                     console.log(e)
                     this.$Notice.error({
@@ -239,7 +226,6 @@ export default {
             });
         },
         refresh() {
-            this.contextShow = false;
             this.$Loading.config({
                 color: '#19be6b',
                 failedColor: '#f0ad4e',
@@ -257,57 +243,73 @@ export default {
         }
     },
     components: {
-        Bucket,
-        ContextMenu
+        BucketDetail
     }
 }
 </script>
 <style>
-.buckets {
+.layout {
     position: relative;
     height: 100%;
     overflow: hidden;
 }
-.buckets .bucket-item {
+.layout .left-menu {
+    width: 200px;
+    height: 100%;
+    background: #495060;
+    float: left;
+    position: relative;
+}
+.layout .right-content {
+    width: calc(100% - 200px);
+    height: 100%;
+    float: left;
+    padding: 25px;
+}
+.layout .setting-icon {
+    position: absolute;
+    color: rgba(255,255,255,.7);
+    cursor: pointer;
+    left: 20px;
+    bottom: 20px;
+    transition: color .3s ease-in-out;
+}
+.layout .setting-icon:hover {
+    color: #fff;
+}
+.add-bucket-btn {
+    width: 152px;
+    margin-left: 24px;
+    background: #495060;
+    border: 1px solid rgba(255,255,255,.7);
+    color: rgba(255,255,255,.7);
+    padding: 5px 10px;
+    cursor: pointer;
+    outline: none;
+    margin-top: 15px;
+    transition: all .2s ease-in-out;
+}
+.add-bucket-btn:hover {
+    border: 1px solid #fff;
+    color: #fff;
+}
+.layout .bucket-item {
     display: inline-block;
     width: 160px;
     height: 180px;
     position: relative;
 }
-.buckets .setting {
-    font-size: 40px;
-    width: 60px;
-    height: 60px;
-    line-height: 60px;
-    text-align: center;
-    border: 1px solid #ccc;
-    border-radius: 50%;
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    cursor: pointer;
-}
-.buckets .addIcon {
-    font-size: 40px;
-    width: 60px;
-    height: 60px;
-    line-height: 60px;
-    text-align: center;
-    border: 1px solid #ccc;
-    border-radius: 50%;
-    position: absolute;
-    bottom: 90px;
-    right: 10px;
-    cursor: pointer;
-}
-.buckets .setting:hover, .buckets .addIcon:hover {
-    color: #2d8cf0;
-    border: 1px solid #2d8cf0;
-    transform: scale(1.1);
-    transition: all .1s ease-in-out;
-}
-.buckets .ivu-spin-fix {
+.layout .ivu-spin-fix {
     background: rgba(255, 255, 255, .8);
+}
+
+.layout .del-bucket-btn {
+    float: right;
+    margin-top: 2px;
+    width: 20px;
+    height: 20px;
+    text-align: center;
+    z-index: 99;
 }
 .spin-icon-load {
     animation: ani-spin 1s linear infinite;

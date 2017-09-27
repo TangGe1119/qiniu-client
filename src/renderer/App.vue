@@ -31,7 +31,6 @@ html, body, #app {
     height: calc(100% - 64px);
     overflow-x: hidden;
     overflow-y: auto;
-    padding: 25px;
 }
 ::-webkit-scrollbar {
     width: 7px;  

@@ -1,11 +1,10 @@
 <template>
-    <div class="bucket-detail">
+    <div class="bucket-detail" ref="bucketDetail">
         <div class="bar">
-            <router-link to="/"><Button icon="ios-arrow-back" type="primary">返回首页</Button></router-link>
-            <div class="fr">
-                <Select v-model="domain" style="width:250px">
+            <Select v-model="domain" style="width:250px">
                     <Option v-for="item in domains" :value="item" :key="item">{{ item }}</Option>
-                </Select>
+            </Select>
+            <div class="fr">
                 <Button @click="refresh" type="info" icon="refresh">刷新</Button>
                 <Button @click="uploadModal = true" type="success" icon="ios-cloud-upload-outline">上传</Button>
                 <Button @click="downloadChecked" type="primary" icon="ios-cloud-download-outline">批量下载</Button>
@@ -13,13 +12,13 @@
             </div>
         </div>
         <Table :columns="columns" :data="content" @on-selection-change="changeSelect"></Table>
-        <Page 
+        <!--<Page 
             v-if="sum > 0" 
             :total="sum" 
             :current.sync="pageNum" 
             :page-size="pageSize"
             @on-change="changePage">
-        </Page>
+        </Page>-->
         <Modal class-name="preview-modal" width="500" v-model="imgModal" style="text-align: center;">
             <h2 slot="header">{{currentImg.key}}</h2>
             <img :src="currentImg.src" style="max-width: 100%;">
@@ -79,9 +78,9 @@
 import {mapActions, mapGetters} from 'vuex';
 import {Dropdown, Button, Icon, DropdownMenu, DropdownItem} from 'iview';
 import {ipcRenderer, clipboard} from 'electron';
-import Policy from '../common/policy';
+import Policy from '../../common/policy';
 import Loading from '@/assets/images/loading.svg';
-import Qiniu from '../common/qiniu';
+import Qiniu from '../../common/qiniu';
 
 export default {
     data() {
@@ -119,7 +118,12 @@ export default {
                 {
                     title: '文件大小',
                     key: 'fsize',
-                    sortable: true
+                    sortable: true,
+                    sortMethod: (a, b, type) => {
+                        a = this._getOriginalFileSize(a)
+                        b = this._getOriginalFileSize(b)
+                        return type === 'asc' ? a - b : b - a
+                    }
                 },
                 {
                     title: '修改时间',
@@ -168,19 +172,17 @@ export default {
                 ],
             },
             pageNum: 1,
-            pageSize: 10,
+            pageSize: 100000, // 不分页了
             sum: 0
         }
     },
+    props: ['name'],
     computed: {
         ...mapGetters([
             'downloadPath',
             'ak',
             'sk'
         ]),
-        name() {
-            return this.$route.params.name;
-        },
         content() {
             return this.list.map(item => {
                 return {
@@ -194,10 +196,24 @@ export default {
             return this._getExtName(this.currentFilename);
         }
     },
-    created() {
-        this._getListByPage();
-        this._getDomain();
-        
+    watch: {
+        name(newName) {
+            if(newName) {
+                this._getListByPage();
+                this._getDomain();
+            }
+            
+        }
+    },
+    beforeMount() {
+        let bucketName = this.$route.params.name
+        if (bucketName) {
+            Qiniu.autoZone(this.ak, bucketName).then(response => {
+                this.uploadURL = `http://${response.up.src.main[0]}`
+            }).catch(error => {
+                console.log(error)
+            })
+        }
         ipcRenderer.on('download-success', (event, filename) => {
             this.$Notice.success({
                 title: '下载成功',
@@ -210,15 +226,13 @@ export default {
             });
         });
     },
-    beforeMount() {
-        let bucketName = this.$route.params.name
-        if (bucketName) {
-            Qiniu.autoZone(this.ak, bucketName).then(response => {
-                this.uploadURL = `http://${response.up.src.main[0]}`
-            }).catch(error => {
-                console.log(error)
-            })
-        }
+    mounted() {
+        this._getListByPage();
+        this._getDomain();
+        this.$nextTick(() => {
+            let height = this.$refs.bucketDetail.clientHeight - 125 + 'px'
+            document.querySelector('.ivu-table-body').style.maxHeight = height
+        })
     },
     methods: {
         ...mapActions([
@@ -442,7 +456,11 @@ export default {
             }).then(list => {
                 this.list = list.items;
                 this.sum = list.sum;
-            }).catch(e => {console.log(e)});
+            }).catch(e => {
+                if(e.statusCode === 631) {
+                    this.$router.replace('/bucket/0')
+                }
+            });
         },
         _getDomain() {
             this.getDomain(this.name).then(domains => {
@@ -472,20 +490,35 @@ export default {
         _isImageMimeType(mime) {
             let imageMimeTypes = ['image/png', 'image/jpeg', 'image/bmp', 'image/gif', 'image/svg+xml', 'image/x-icon']
             return imageMimeTypes.includes(mime)
+        },
+        _getOriginalFileSize(sizeStr) {
+            let sizeArr = sizeStr.split(' ')
+            let num = sizeArr[0]
+            switch(sizeArr[1]) {
+                case 'B':
+                    return num
+                case 'KB':
+                    return num * 1024
+                case 'MB':
+                    return num * 1048576
+            }
         }
     }
 }
 </script>
 <style>
-.bucket-detail  .bar {
+.bucket-detail {
+    height: 100%;
+}
+.bucket-detail .bar {
     height: 30px;
     line-height: 30px;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
 }
-.bucket-detail  .bar .fr {
+.bucket-detail .bar .fr {
     float: right;
 }
-.bucket-detail  .bar .fr button {
+.bucket-detail .bar .fr button {
     margin-left: 10px;
 }
 .bucket-detail .option .ivu-icon {
@@ -499,6 +532,10 @@ export default {
     font-size: 14px;
     padding: 5px 0;
     word-break: break-all;
+}
+.ivu-table-body {
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 .ivu-table-cell {
     font-size: 14px;

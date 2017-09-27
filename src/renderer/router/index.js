@@ -8,16 +8,15 @@ const router = new Router({
     routes: [
         {
             path: '/',
-            component: require('@/pages/BucketList')
+            redirect: '/bucket/0'
+        },
+        {
+            path: '/bucket/:id',
+            component: require('@/pages/Layout')
         },
         {
             path: '/nokey',
             component: require('@/pages/NoKey')
-        },
-        {
-            name: 'bucketDetail',
-            path: '/bucket-detail/:name',
-            component: require('@/pages/BucketDetail')
         },
         {
             path: '*',
