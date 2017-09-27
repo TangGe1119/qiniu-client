@@ -181,7 +181,8 @@ export default {
         ...mapGetters([
             'downloadPath',
             'ak',
-            'sk'
+            'sk',
+            'buckets'
         ]),
         content() {
             return this.list.map(item => {
@@ -206,9 +207,10 @@ export default {
         }
     },
     beforeMount() {
-        let bucketName = this.$route.params.name
+        let bucketName = this.buckets[+this.$route.params.id]
         if (bucketName) {
             Qiniu.autoZone(this.ak, bucketName).then(response => {
+                console.log(response)
                 this.uploadURL = `http://${response.up.src.main[0]}`
             }).catch(error => {
                 console.log(error)

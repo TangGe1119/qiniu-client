@@ -17,19 +17,15 @@
 * [x] 获取bucket内文件
 * [x] 图片预览
 * [x] 文件的下载（设置的下载路径）、上传、删除、链接复制等
+* [x] 新建、删除、重命名（没有相关api）bucket
+* [x] bucket内文件重命名
+* [x] 文件默认按时间进行排序
+* [x] 空间域名选择
+* [x] 文件按照文件大小和上传时间进行升序或降序排序
 
 ## TODO
-* [x] ~~bucket内文件进行分页~~
-* [ ] bucket内使用图标平铺形式，图片直接显示预览（不做了）
-* [x] ~~新建、删除、重命名（没有相关api）bucket~~
-* [x] ~~bucket内文件重命名~~
-* [x] ~~文件默认按时间进行排序~~
-* [ ] 文件根据前缀进行搜索
-* [x] ~~空间域名选择~~
+* [ ] bucket内文件显示增加平铺的方式
 
-## 项目截图
-![首页](http://od0vckdjr.bkt.clouddn.com/qiniu-1.png)
-![设置秘钥](http://od0vckdjr.bkt.clouddn.com/qiniu-2.png)
-![空间列表](http://od0vckdjr.bkt.clouddn.com/qiniu-3.png)
-![文件列表](http://od0vckdjr.bkt.clouddn.com/qiniu-4.png)
-![文件上传](http://od0vckdjr.bkt.clouddn.com/qiniu-5.png)
+
+## 项目截图（2017.9.21已更新UI）
+![列表](http://od0vckdjr.bkt.clouddn.com/qiniu_liebiao.png)
