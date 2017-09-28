@@ -5,10 +5,12 @@
                     <Option v-for="item in domains" :value="item" :key="item">{{ item }}</Option>
             </Select>
             <div class="fr">
-                <Button @click="refresh" type="info" icon="refresh">刷新</Button>
-                <Button @click="uploadModal = true" type="success" icon="ios-cloud-upload-outline">上传</Button>
-                <Button @click="downloadChecked" type="primary" icon="ios-cloud-download-outline">批量下载</Button>
-                <Button @click="delectChecked" type="warning" icon="android-delete">批量删除</Button>
+                <input placeholder="输入前缀，回车搜索" class="search-input" ref="searchInput" v-model="searchStr" @blur="searchBlur" @keyup.enter="searchEnter" type="text" :style="{width: isSeaching ? '150px' : 0}">
+                <Icon @click.native="handleSearch" type="search" :class="{active: isSeaching}"></Icon>
+                <Icon @click.native="refresh" type="refresh" title="刷新"></Icon>
+                <Icon @click.native="uploadModal = true" type="android-upload" title="上传"></Icon>
+                <Icon @click.native="downloadChecked" type="android-download" title="批量下载"></Icon>
+                <Icon @click.native="delectChecked" type="android-delete" title="批量删除"></Icon>
             </div>
         </div>
         <Table :columns="columns" :data="content" @on-selection-change="changeSelect"></Table>
@@ -97,7 +99,8 @@ export default {
                 {
                     title: '文件名',
                     width: 400,
-                    key: 'key'
+                    key: 'key',
+                    ellipsis: true
                 },
                 {
                     title: '文件类型',
@@ -130,7 +133,8 @@ export default {
                 {
                     title: '修改时间',
                     key: 'putTime',
-                    sortable: true
+                    sortable: true,
+                    ellipsis: true
                 },
                 {
                     title: '操作',
@@ -175,7 +179,9 @@ export default {
             },
             pageNum: 1,
             pageSize: 100000, // 不分页了
-            sum: 0
+            sum: 0,
+            isSeaching: false,
+            searchStr: ''
         }
     },
     props: ['name'],
@@ -212,7 +218,6 @@ export default {
         let bucketName = this.buckets[+this.$route.params.id]
         if (bucketName) {
             Qiniu.autoZone(this.ak, bucketName).then(response => {
-                console.log(response)
                 this.uploadURL = `http://${response.up.src.main[0]}`
             }).catch(error => {
                 console.log(error)
@@ -452,11 +457,31 @@ export default {
                 title: '链接复制成功'
             });
         },
-        _getListByPage() {
+        handleSearch() {
+            this.isSeaching = true
+            this.$nextTick(() => {
+                this.$refs.searchInput.focus()
+            })
+        },
+        searchBlur(e) {
+            this.isSeaching = false
+        },
+        searchEnter() {
+            if(/[\u4e00-\u9fa5]/.test(this.searchStr)) {
+                this.$Notice.warning({
+                    title: '不能搜索中文'
+                });
+                this.searchStr = ''
+                return
+            }
+            this._getListByPage(this.searchStr)
+        },
+        _getListByPage(prefix) {
             this.getListByPage({
                 bucket: this.name,
                 pageSize: this.pageSize,
-                pageNum: this.pageNum
+                pageNum: this.pageNum,
+                prefix: prefix || ''
             }).then(list => {
                 this.list = list.items;
                 this.sum = list.sum;
@@ -517,7 +542,7 @@ export default {
 .bucket-detail .bar {
     height: 30px;
     line-height: 30px;
-    margin-bottom: 25px;
+    margin-bottom: 20px;
 }
 .bucket-detail .bar .fr {
     float: right;
@@ -530,6 +555,22 @@ export default {
     padding: 5px 10px;
     cursor: pointer;
     color: #2d8cf0;
+}
+.bucket-detail .search-input {
+    border: 0;
+    outline: none;
+    border-bottom: 2px solid #495060;
+    position: relative;
+    right: -18px;
+    height: 24px;
+    line-height: 20px;
+    font-size: 14px;
+    padding: 2px 0;
+    color: #495060;
+    transition: width .2s ease-in-out;
+}
+.bucket-detail .search-input:focus {
+    border-bottom: 2px solid #2d8cf0;
 }
 .desc {
     text-align: left;
@@ -579,5 +620,21 @@ export default {
 .bucket-detail .ivu-page {
     padding-top: 20px;
     text-align: center;
+}
+.bucket-detail .bar .fr .ivu-icon {
+    width: 20px;
+    height: 20px;
+    text-align: center;
+    margin-left: 15px;
+    cursor: pointer;
+    margin-top: 5px;
+    font-size: 23px;
+    transition: color .3s ease-in-out;
+}
+.bucket-detail .bar .fr .ivu-icon:hover {
+    color: #2d8cf0;
+}
+.active {
+    color: #2d8cf0;
 }
 </style>

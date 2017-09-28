@@ -8,9 +8,9 @@
                     <Icon @click.native.stop="remove(item, index)" class="del-bucket-btn" type="ios-close-empty" :size="22"></Icon>
                 </MenuItem>
             </Menu>
-            <button class="add-bucket-btn" @click="addBucket">
-                <Icon type="plus-round"></Icon>&nbsp;&nbsp;添加Bucket
-            </Button>
+            <p style="text-align: center;margin-top: 15px;">
+                <Icon @click.native="addBucket" type="ios-plus-outline" class="add-icon" :size="26"></Icon>
+            </p>
             <Icon @click.native="showSettingMoal" title="基本设置" class="setting-icon" type="ios-gear" :size="32"></Icon>
         </div>
         <div class="right-content">
@@ -277,20 +277,12 @@ export default {
 .layout .setting-icon:hover {
     color: #fff;
 }
-.add-bucket-btn {
-    width: 152px;
-    margin-left: 24px;
-    background: #495060;
-    border: 1px solid rgba(255,255,255,.7);
-    color: rgba(255,255,255,.7);
-    padding: 5px 10px;
+.layout .add-icon {
     cursor: pointer;
-    outline: none;
-    margin-top: 15px;
-    transition: all .2s ease-in-out;
+    color: rgba(255,255,255,.7);
+    transition: color .3s ease-in-out;
 }
-.add-bucket-btn:hover {
-    border: 1px solid #fff;
+.layout .add-icon:hover {
     color: #fff;
 }
 .layout .bucket-item {
