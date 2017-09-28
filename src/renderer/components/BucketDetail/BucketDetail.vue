@@ -566,8 +566,9 @@ export default {
     line-height: 20px;
     font-size: 14px;
     padding: 2px 0;
+    text-indent: 2px;
     color: #495060;
-    transition: width .2s ease-in-out;
+    transition: all .2s ease-in-out;
 }
 .bucket-detail .search-input:focus {
     border-bottom: 2px solid #2d8cf0;
