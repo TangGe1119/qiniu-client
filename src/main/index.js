@@ -24,7 +24,10 @@ function createWindow() {
         height: 768,
         useContentSize: true,
         width: 1366,
-        resizable: process.env.NODE_ENV === 'development'
+        resizable: process.env.NODE_ENV === 'development',
+        webPreferences: {
+            webSecurity: false
+        }
     })
 
     mainWindow.loadURL(winURL) // 开发时直接全屏

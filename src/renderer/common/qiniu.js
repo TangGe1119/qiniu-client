@@ -1,28 +1,26 @@
 import Util from './util'
-import rp from 'request-promise'
-import axios from 'axios'
+import request from './request'
 import config from '../common/config'
 
 export default class Qiniu {
     /**
-    * auto get the bucket zone
-    * @param ak       accessKey
-    * @param bucket   bucket name
-    */
+     * auto get the bucket zone
+     * @param ak       accessKey
+     * @param bucket   bucket name
+     */
     static autoZone(ak, bucket) {
         const requestURI = `https://uc.qbox.me/v2/query?ak=${ak}&bucket=${bucket}`
-        const options = {
-            uri: requestURI,
-            json: true
+        const config = {
+            url: requestURI
         }
-        return rp(options)
+        return request(config)
     }
 
     /**
      * get all buckets by ak and sk
      * @static
-     * @param {string} ak 
-     * @param {string} sk 
+     * @param {string} ak
+     * @param {string} sk
      * @returns {Promise}
      * @memberof Qiniu
      */
@@ -35,25 +33,24 @@ export default class Qiniu {
         const reqBody = ''
         const accessToken = Util.generateAccessToken(mac, requestURI, reqBody)
 
-        const options = {
-            uri: requestURI,
+        const config = {
+            url: requestURI,
             headers: {
                 Authorization: accessToken
-            },
-            json: true
+            }
         }
-        return rp(options)
+        return request(config)
     }
 
     /**
      * get list in current bucket
      * @static
-     * @param {string} ak 
-     * @param {string} sk 
-     * @param {string} bucket 
-     * @param {string} [marker=''] 
-     * @param {string} [prefix=''] 
-     * @param {number} [limit=100] 
+     * @param {string} ak
+     * @param {string} sk
+     * @param {string} bucket
+     * @param {string} [marker='']
+     * @param {string} [prefix='']
+     * @param {number} [limit=100]
      * @returns {Promise}
      * @memberof Qiniu
      */
@@ -62,29 +59,31 @@ export default class Qiniu {
             accessKey: ak,
             secretKey: sk
         }
-        const requestURI = `http://rsf.qbox.me/list?bucket=${bucket}&limit=100&marker=${marker}&prefix=${prefix}`
+
+        const requestURI = `http://rsf.qbox.me/list?bucket=${bucket}&limit=100&marker=${marker}&prefix=${encodeURIComponent(
+            prefix
+        )}`
         const reqBody = ''
         const accessToken = Util.generateAccessToken(mac, requestURI, reqBody)
 
         // config.headers.Authorization = accessToken
-        const options = {
-            uri: requestURI,
+        const config = {
+            url: requestURI,
             headers: {
                 Authorization: accessToken
-            },
-            json: true
+            }
         }
 
-        return rp(options)
+        return request(config)
         // return axios.get(requestURI, config)
     }
 
     /**
      * get current bucket's domain
      * @static
-     * @param {string} ak 
-     * @param {string} sk 
-     * @param {string} bucket 
+     * @param {string} ak
+     * @param {string} sk
+     * @param {string} bucket
      * @returns {Promise}
      * @memberof Qiniu
      */
@@ -97,24 +96,23 @@ export default class Qiniu {
         const reqBody = ''
         const accessToken = Util.generateAccessToken(mac, requestURI, reqBody)
 
-        const options = {
-            uri: requestURI,
+        const config = {
+            url: requestURI,
             headers: {
                 Authorization: accessToken
-            },
-            json: true
+            }
         }
 
-        return rp(options)
+        return request(config)
     }
 
     /**
      * delete file in current bucket
      * @static
-     * @param {string} ak 
-     * @param {string} sk 
-     * @param {string} bucket 
-     * @param {string} key 
+     * @param {string} ak
+     * @param {string} sk
+     * @param {string} bucket
+     * @param {string} key
      * @returns {Promise}
      * @memberof Qiniu
      */
@@ -128,24 +126,23 @@ export default class Qiniu {
         const requestURI = `http://rs.qiniu.com/delete/${encodedEntryURI}`
         const reqBody = ''
         const accessToken = Util.generateAccessToken(mac, requestURI, reqBody)
-        const options = {
-            uri: requestURI,
+        const config = {
+            url: requestURI,
             headers: {
                 Authorization: accessToken
-            },
-            json: true
+            }
         }
 
-        return rp(options)
+        return request(config)
     }
 
     /**
      * create bucket
      * @static
-     * @param {string} ak 
-     * @param {string} sk 
-     * @param {string} bucket 
-     * @param {string} region 
+     * @param {string} ak
+     * @param {string} sk
+     * @param {string} bucket
+     * @param {string} region
      * @returns {Promise}
      * @memberof Qiniu
      */
@@ -159,22 +156,21 @@ export default class Qiniu {
         const requestURI = `http://rs.qiniu.com/mkbucketv2/${encodedBucketName}/${region}`
         const reqBody = ''
         const accessToken = Util.generateAccessToken(mac, requestURI, reqBody)
-        const options = {
-            uri: requestURI,
+        const config = {
+            url: requestURI,
             headers: {
                 Authorization: accessToken
-            },
-            json: true
+            }
         }
-        return rp(options)
+        return request(config)
     }
 
     /**
      * delete bucket
      * @static
-     * @param {string} ak 
-     * @param {string} sk 
-     * @param {string} bucket 
+     * @param {string} ak
+     * @param {string} sk
+     * @param {string} bucket
      * @returns {Promise}
      * @memberof Qiniu
      */
@@ -186,23 +182,22 @@ export default class Qiniu {
         const requestURI = `http://rs.qiniu.com/drop/${bucket}`
         const reqBody = ''
         const accessToken = Util.generateAccessToken(mac, requestURI, reqBody)
-        const options = {
-            uri: requestURI,
+        const config = {
+            url: requestURI,
             headers: {
                 Authorization: accessToken
-            },
-            json: true
+            }
         }
-        return rp(options)
+        return request(config)
     }
 
     /**
      * rename file
-     * @param {string} ak 
-     * @param {string} sk 
-     * @param {string} bucket 
-     * @param {string} src 
-     * @param {string} dest 
+     * @param {string} ak
+     * @param {string} sk
+     * @param {string} bucket
+     * @param {string} src
+     * @param {string} dest
      */
     static renameFile(ak, sk, bucket, src, dest) {
         const mac = {
@@ -216,13 +211,12 @@ export default class Qiniu {
         const requestURI = `http://rs.qiniu.com/move/${encodedEntryURISrc}/${encodedEntryURIDest}`
         const reqBody = ''
         const accessToken = Util.generateAccessToken(mac, requestURI, reqBody)
-        const options = {
-            uri: requestURI,
+        const config = {
+            url: requestURI,
             headers: {
                 Authorization: accessToken
-            },
-            json: true
+            }
         }
-        return rp(options)
+        return request(config)
     }
 }

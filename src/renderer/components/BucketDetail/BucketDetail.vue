@@ -98,13 +98,13 @@ export default {
                 },
                 {
                     title: '文件名',
-                    width: 400,
+                    width: 350,
                     key: 'key',
                     ellipsis: true
                 },
                 {
                     title: '文件类型',
-                    width: 150,
+                    width: 200,
                     key: 'mimeType',
                     filters: [
                         {
@@ -467,13 +467,13 @@ export default {
             this.isSeaching = false
         },
         searchEnter() {
-            if(/[\u4e00-\u9fa5]/.test(this.searchStr)) {
-                this.$Notice.warning({
-                    title: '不能搜索中文'
-                });
-                this.searchStr = ''
-                return
-            }
+            // if(/[\u4e00-\u9fa5]/.test(this.searchStr)) {
+            //     this.$Notice.warning({
+            //         title: '不能搜索中文'
+            //     });
+            //     this.searchStr = ''
+            //     return
+            // }
             this._getListByPage(this.searchStr)
         },
         _getListByPage(prefix) {
